@@ -1,0 +1,114 @@
+@import-normalize;
+
+html {
+  font-size: 14px; 
+  font-family: Verdana, Geneva, Tahoma, sans-serif;
+  background-color: rgb(241, 248, 248);
+  }
+table {      
+  width: 100%;
+  border: 1px solid #CCC;
+  border-collapse: collapse;
+}
+th {
+  font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+  font-size: 16px;
+  border: none;      
+}
+td { /* default settings */   
+  border: none;
+  text-align: center;      
+  max-width: fit-content;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+tr[evindex='0']:not([evn='1']) td:nth-child(4), 
+tr[evindex='0']:not([evn='1']) td:nth-child(5),
+tr[evindex='0']:not([evn='1']) td:nth-child(6),
+tr[evindex='0']:not([evn='1']) td:nth-child(7){ /* has events - mark bold */      
+  font-weight: bolder;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;      
+} 
+tbody tr[ativo='não'] { /* mark dead processes */
+  color: rgb(148, 13, 40);      
+}
+tbody tr[ativo='sim'] { /* mark dead processes */
+  color: blue;      
+}
+/* Descrição (6) must be readable completely */
+tr td:nth-child(6) { max-width: fit-content !important; }
+/* OBS(7) DOU(8) set max-width with rem - 
+don't need to read at first glance */
+tr td:nth-child(11), tr td:nth-child(12) {
+  max-width: 15rem !important;
+} 
+/* to read overflow hidden text on 11, 12 */
+tr td:nth-child(11):hover, tr td:nth-child(12):hover { /* disable overflow on hover */
+  /* show content as a box */
+  overflow: visible;
+  white-space: normal;
+  position: fixed;
+  background-color: white;
+  box-shadow: 0 0 4px 0 black;
+}
+tr.c1 { background-color: white;   }
+tr.c2 { background-color: #78b0de;   }
+tr:hover { background-color: rgb(180, 180, 180) !important; }
+
+.container li {
+  background: burlywood;
+  text-decoration: none;
+  align-items: center;
+  flex-shrink: 0; 
+  display: flex;      
+  padding: 0.5em;      
+  border: 3px solid white;
+}
+
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: stretch ;
+  list-style: none;
+  margin: 0;       
+  color : white;
+  font-size: medium;   
+}
+
+/* main page */
+/* <!-- https://css-tricks.com/snippets/css/a-guide-to-flexbox/ --> */
+
+div.flexcontainer
+{
+  display: flex;        
+  align-content: center;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+
+.SCM
+{
+  font-weight: bold;
+  font-size: 14px;
+  color: #ffffff;
+  font-family: Tahoma;
+  background-color: #668DB1;
+  padding: 4px;
+}
+
+/* NUP button */
+button.copyprocess {
+  background: none!important;
+  border: none;
+  padding: 0!important;
+  text-decoration: underline;
+  cursor: pointer;
+}
+/* click effect */
+button.copyprocess:active {
+  background-color: #3e8e41;
+  box-shadow: 0 1px #666;
+  transform: translateY(4px);
+}
