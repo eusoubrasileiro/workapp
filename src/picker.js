@@ -1,13 +1,10 @@
 import React from 'react';
-import { useState, useEffect, useContext } from 'react';
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { DataContext } from './index.js';
 import './index.css';
 
 
-const backend_url = 'http://127.0.0.1:5000' // flask-backend running
-
-function ProcessRow({name, dados, setSelected}) {
+function ProcessRow({name, dados}) {
   function clipboardCopyNup(){         
     // property doesnt exist if not running from localhost or https 
     // TODO: check -> window.isSecureContext and alert      
@@ -30,7 +27,7 @@ function ProcessRow({name, dados, setSelected}) {
       <Link to={`/table/${ name.replace('/', '-') }`} > {name} </Link> 
       <div><img src="https://sei.anm.gov.br/imagens/sei_logo_azul_celeste.jpg"></img></div>
       <div><button className="copyprocess" onClick={clipboardCopyNup} > { dados['NUP'] }</button> </div>
-      <a className="SCM" href={`${backend_url}/process?process=${name}`} target="_blank">SCM</a> 
+      <a className="SCM" href={`/flask/process?process=${name}`} target="_blank">SCM</a> 
       {dados['tipo']}
       {rowStatus()}     
     </> 

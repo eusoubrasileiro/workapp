@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
-const backend_url = 'http://127.0.0.1:5000' // flask-backend running
-
 function Table({ processos }) {
   const { name } = useParams();
   const [ table, setTable ] = useState(null);

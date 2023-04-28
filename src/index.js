@@ -1,11 +1,10 @@
 import ReactDOM from "react-dom/client";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { useState, useEffect, createContext } from 'react';
+import { useState, useEffect} from 'react';
 import PickProcess from "./picker.js";
 import Table from "./table.js";
 
-export const DataContext = createContext();
-const backend_url = 'http://127.0.0.1:5000' // flask-backend running
+
 
 export default function App() {
   const [data, setData] = useState([]);
@@ -13,15 +12,17 @@ export default function App() {
 
   function fetchData(fast){
     // fast can be 'true' or 'false'
-    fetch(`${backend_url}/json`, 
-      { headers: { 'fast-refresh': fast } })
+    fetch(`flask/json`, 
+      { headers: { 
+        'fast-refresh': fast } })
     .then(res => res.json()
     .then(data => {
       setData(data.status);
       setProcessos(data.processos);          
     }))
     .catch((error) => {
-      alert(`Error on PickProcess request ${error}`);
+      // this keeps happing many times if I make 2/3/4 F5 press fast
+      console.info(`Error on PickProcess request ${error}`);
     });      
   }
 
@@ -39,7 +40,7 @@ export default function App() {
     }; 
   }, []); // will run only once
 
-  if (processos.length === 0) {
+  if (processos.length == 0) { // conditional rendering otherwise `processos` undefined
     return <div>Loading...</div>;
   } 
 
