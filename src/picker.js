@@ -2,34 +2,22 @@ import React from 'react';
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import './index.css';
+import { clipboardCopyNup, rowStatus } from './utils';
 
 
 function ProcessRow({name, dados}) {
-  function clipboardCopyNup(){         
-    // property doesnt exist if not running from localhost or https 
-    // TODO: check -> window.isSecureContext and alert      
+
+  const clipboardCopy = () => 
     navigator.clipboard.writeText(`${dados['NUP']}`);
-  }
-  
-  function rowStatus(){
-    if(dados.hasOwnProperty('iestudo')){
-      if(dados.iestudo.done)
-        return <a>&#9989;</a>       
-      else 
-        return <a>&#x23F3;</a>                         
-    }
-    else
-      return <a>&#10060;</a>
-  }
 
   return (
     <>
       <Link to={`/table/${ name.replace('/', '-') }`} > {name} </Link> 
       <div><img src="https://sei.anm.gov.br/imagens/sei_logo_azul_celeste.jpg"></img></div>
-      <div><button className="copyprocess" onClick={clipboardCopyNup} > { dados['NUP'] }</button> </div>
+      <div><button className="copyprocess" onClick={clipboardCopy} > { dados['NUP'] }</button> </div>
       <a className="SCM" href={`/flask/process?process=${name}`} target="_blank">SCM</a> 
       {dados['tipo']}
-      {rowStatus()}     
+      {rowStatus(dados)}     
     </> 
   )   
 }

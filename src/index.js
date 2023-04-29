@@ -5,14 +5,13 @@ import PickProcess from "./picker.js";
 import Table from "./table.js";
 
 
-
 export default function App() {
   const [data, setData] = useState([]);
   const [processos, setProcessos] = useState([]);
 
   function fetchData(fast){
     // fast can be 'true' or 'false'
-    fetch(`flask/json`, 
+    fetch(`/flask/json`, 
       { headers: { 
         'fast-refresh': fast } })
     .then(res => res.json()
@@ -26,16 +25,17 @@ export default function App() {
     });      
   }
 
-  function slowRefresh(){
-    fetchData('false');
-  }
+  // F5 or refresh causes a slow-refresh
+  const slowRefresh = () => fetchData('false');  
 
   useEffect(() => {
-    fetchData('false'); // first call     
-    const interval = setInterval(() => { fetchData('true') }, 15000);
+    fetchData('true'); // first call must be fast
+    const interval_fast = setInterval(() => { fetchData('true') }, 15000);
+    const interval_slow = setInterval(() => { fetchData('false') }, 60000);
     window.addEventListener("beforeunload", slowRefresh);    
     return () => {  // on unmount component
-      clearInterval(interval);  // remove the timer
+      clearInterval(interval_fast);  // remove the timer
+      clearInterval(interval_slow);  // remove the timer
       window.removeEventListener("beforeunload", slowRefresh);
     }; 
   }, []); // will run only once
