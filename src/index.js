@@ -7,7 +7,7 @@ import Table from "./table.js";
 
 export default function App() {
   const [data, setData] = useState([]);
-  const [processos, setProcessos] = useState([]);
+  const [processos, setProcessos] = useState({});
 
   function fetchData(fast){
     // fast can be 'true' or 'false'
@@ -19,8 +19,7 @@ export default function App() {
       setData(data.status);
       setProcessos(data.processos);          
     }))
-    .catch((error) => {
-      // this keeps happing many times if I make 2/3/4 F5 press fast
+    .catch((error) => {      
       console.info(`Error on PickProcess request ${error}`);
     });      
   }

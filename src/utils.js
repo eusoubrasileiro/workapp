@@ -11,11 +11,11 @@ function rowStatus(dados) {
         return <a>&#10060;</a>
 }
   
-function clipboardCopyNup(text) {
+function clipboardCopy(text) {
     // property doesnt exist if not running from localhost or https 
     // TODO: check -> window.isSecureContext and alert      
     navigator.clipboard.writeText(text);
 }
 
 
-export { rowStatus, clipboardCopyNup };
+export { rowStatus, clipboardCopy };

@@ -1,75 +1,44 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { clipboardCopyNup, rowStatus } from './utils';
+import { clipboardCopy, rowStatus } from './utils';
 
-function Table({ processos }) {
+function Table({processos}) {
   const { name } = useParams();
-  const [ table, setTable ] = useState(null);
+  const [ table, setTable ] = useState(null);  
   
   useEffect(() => {
-    document.title = `${name}`;     
-    // return () => {  // on unmount component
-    // //   window.removeEventListener("beforeunload", Refreshing);
-    // }; 
-    // console.log(`${list_processos}`);
-    // setTable(list_processos[`${name.replace('-','/')}`]['iestudo_table']);
-  }, []); 
+    document.title = `${name}`;
+  }, [name]); 
 
-  if (processos.length == 0) { // conditional rendering otherwise `processos` undefined
-    return <div>Loading...</div>;
-  } 
+  if (processos.length == 0)  // conditional rendering otherwise `processos` undefined
+    return <div>Loading...</div>;  
 
-  const fmtdname = name.replace('-','/');
-  const process = processos[fmtdname];
-  console.info(fmtdname);  
+  let fmtdname = name.replace('-','/');
+  let process = processos[fmtdname];  
+  let parent = process.parents ? process.parents[0] : 'None'; // leilão or disponibilidade
+  //make table   
 
   return (
     <>
-    <h4>{`${name}`}</h4>
-      <div className="container">
-       {/*<a>Prioridade: { processos[fmtdname].prioridade }</a> 
-        <a href={`/flask/process?process=${fmtdname}`}> SCM </a> 
-        <button className="copyprocess" onClick={clipboardCopyNup(processos['NUP'])} > { processos['NUP'] }</button>
-         <div> 
-            <a>1<sup>st</sup> parent: 
-            if dados['parents'] 
-            { dados['parents'][0] }
-            else 
-            { 'None' }
-            endif 
-            </a> 
-        </div>
-        <div>
-            <a id="iestudo">&#9989;</a>                    
-            <a id="iestudo">&#10060;</a>
-        </div>      */}
-      </div>        
-    <div>{`${processos}`}</div> 
+    <div className="container">
+      <a>Prioridade: { process.prioridade }</a> 
+      <a href={`/flask/process?process=${fmtdname}`}> SCM </a> 
+      <button className="copyprocess" onClick={() => clipboardCopy(process.NUP)} > { process.NUP }</button>
+        <div> 
+          <a>1<sup>st</sup> parent: 
+            {parent}
+          </a> 
+        </div> 
+      <div>
+        {rowStatus(process)}
+      </div>      
+    </div>        
+    <div>{`${process.NUP}`}</div> 
     </>
   );
 }
 
 export default Table;
-
-// ========================================
-// {% else %}    
-
-// {{ pandas_table|safe }}     
-// {% endif %}   
-
-
-//   function fetchTable(){
-//     fetch(`${backend_url}/table?selected=${name}`)
-//     .then(res => res.json()
-//     .then(data => {
-//         console.log(`${data}`)
-//         setTable(data);      
-//     }))
-//     .catch((error) => {
-//       alert(`Error on fetchTable request ${error}`);
-//     });  
-//   }
-
 
 // def htmlTable(table): 
 //     """crate a html code for a pretty view of dataframe `table` """

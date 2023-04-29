@@ -2,19 +2,16 @@ import React from 'react';
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import './index.css';
-import { clipboardCopyNup, rowStatus } from './utils';
+import { clipboardCopy, rowStatus } from './utils';
 
 
 function ProcessRow({name, dados}) {
-
-  const clipboardCopy = () => 
-    navigator.clipboard.writeText(`${dados['NUP']}`);
 
   return (
     <>
       <Link to={`/table/${ name.replace('/', '-') }`} > {name} </Link> 
       <div><img src="https://sei.anm.gov.br/imagens/sei_logo_azul_celeste.jpg"></img></div>
-      <div><button className="copyprocess" onClick={clipboardCopy} > { dados['NUP'] }</button> </div>
+      <div><button className="copyprocess" onClick={() => clipboardCopy(dados['NUP'])} > { dados['NUP'] }</button> </div>
       <a className="SCM" href={`/flask/process?process=${name}`} target="_blank">SCM</a> 
       {dados['tipo']}
       {rowStatus(dados)}     
@@ -24,12 +21,12 @@ function ProcessRow({name, dados}) {
 
 function ProcessRows({processos}) {    
   const rows = []; // assemly an array of ProcessRow's
-    for(let i=0; i<processos.length; i++){
+    for(const [key, value] of Object.entries(processos)){
       rows.push(
         // react needs a 'key' property for each list item
-        <li key={processos[i][0]}>            
+        <li key={key}>            
             <div className="flexcontainer">
-              <ProcessRow name={processos[i][0]} dados={processos[i][1]} />          
+              <ProcessRow name={key} dados={value} />          
             </div>
         </li>);
     }
