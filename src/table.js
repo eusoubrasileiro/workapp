@@ -5,18 +5,15 @@ import { clipboardCopy, rowStatus } from './utils';
 function Table({processos}) {
   const { name } = useParams();
   const [ table, setTable ] = useState(null);  
-  
-  useEffect(() => {
-    document.title = `${name}`;
-  }, [name]); 
-
-  if (processos.length == 0)  // conditional rendering otherwise `processos` undefined
-    return <div>Loading...</div>;  
 
   let fmtdname = name.replace('-','/');
+  // Must always use conditional rendering to wait for variables loading
+  // and definition otherwise Error: `processos` or `process.prioridade` undefined 
+  if (processos.length == 0 || !processos.hasOwnProperty(fmtdname))  
+    return <div>Loading...</div>;    
   let process = processos[fmtdname];  
   let parent = process.parents ? process.parents[0] : 'None'; // leilão or disponibilidade
-  //make table   
+  document.title = `${name}`;
 
   return (
     <>
