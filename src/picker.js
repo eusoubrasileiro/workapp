@@ -1,8 +1,8 @@
 import React from 'react';
-import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import './index.css';
+import { useState, useEffect} from 'react';
 import { clipboardCopy, rowStatus } from './utils';
+import './index.css';
 
 
 function ProcessRow({name, dados}) {
@@ -34,11 +34,42 @@ function ProcessRows({processos}) {
 }
 
 
-function PickProcess({data, processos}){
+function PickProcess(){
+  const [data, setData] = useState([]);
+  const [processos, setProcessos] = useState({});
 
-  useEffect(() => {        
-    document.title = "Work";     
+  function fetchData(fast){
+    // fast can be 'true' or 'false'
+    fetch(`/flask/json`, 
+      { headers: { 
+        'fast-refresh': fast } })
+    .then(res => res.json()
+    .then(data => {
+      setData(data.status);
+      setProcessos(data.processos);          
+    }))
+    .catch((error) => {      
+      console.info(`Error on PickProcess request ${error}`);
+    });      
+  }
+
+  // F5 or refresh causes a slow-refresh
+  const slowRefresh = () => fetchData('false');  
+
+  useEffect(() => {
+    document.title = "Work";
+    fetchData('true'); // first call must be fast
+    const interval_slow = setInterval(() => { fetchData('false') }, 15000);
+    window.addEventListener("beforeunload", slowRefresh);    
+    return () => {  // on unmount component
+      clearInterval(interval_slow);  // remove the timer
+      window.removeEventListener("beforeunload", slowRefresh);
+    }; 
   }, []); // will run only once
+
+  if (processos.length == 0) { // conditional rendering otherwise `processos` undefined
+    return <div>Loading...</div>;
+  } 
 
   return (
     <div>

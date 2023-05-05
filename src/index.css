@@ -56,24 +56,6 @@ tr.c1 { background-color: white;   }
 tr.c2 { background-color: #78b0de;   }
 tr:hover { background-color: rgb(180, 180, 180) !important; }
 
-.container li {
-  background: burlywood;
-  text-decoration: none;
-  align-items: center;
-  flex-shrink: 0; 
-  display: flex;      
-  padding: 0.5em;      
-  border: 3px solid white;
-}
-
-.container {
-  display: flex;    
-  align-content: center;
-  flex-direction: row;
-  align-items: center;
-  gap: 10px;
-  font-size: medium;   
-}
 
 /* main page */
 /* <!-- https://css-tricks.com/snippets/css/a-guide-to-flexbox/ --> */
@@ -110,4 +92,28 @@ button.copyprocess:active {
   background-color: #3e8e41;
   box-shadow: 0 1px #666;
   transform: translateY(4px);
+}
+
+
+/* table iestudo */
+
+.tablecontainer {
+  display: flex;
+  align-content: center;
+  flex-direction: column;
+  align-items: center;
+}
+
+.navbarcontainer {
+  display: flex;    
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  font-size: medium;   
+  border: #3e8e41;
+  background: burlywood;
+  padding: 0.5%;
+  text-decoration: none;
+  border: 3px solid white;
+  color: green;
 }
