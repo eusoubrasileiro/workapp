@@ -4,128 +4,105 @@ import { clipboardCopy, rowStatus } from './utils';
 import { v4 as uuidv4 } from 'uuid';
 
 
-function TinyCheckBox({state, Changed}){  
+function TinyCheckBox({state, onChange}){  
   return (
-    <input type='checkbox' checked={state} onChange={Changed}>
+    <input type='checkbox' checked={state} onChange={onChange}>
     </input>
   );
 }
 
 function Cell({value, onClick}){ // undefined is the default if not set
    return (
-    <td key={uuidv4()} onClick={onclick}>{value}</td>
+    <td key={uuidv4()} onClick={onClick}>{value}</td>
   );
 }
 
-
 function IeTable({iestudo}){
-  // arrays of same size for checkboxes and showevents states
-  const [ checkboxes, setCheckboxes] = useState([]);
-  const [ showevents, setShowEvents] = useState([]); 
-  // const [ rows, setRows] = useState([]);
+  // arrays of same size for checkboxes and showevents states  
+  const [ table, setTable] = useState({});
+  const [ checkboxes, setCheckboxes] = useState({});
+  const [ eventview, setEventview] = useState({});
 
-  function onChangeCheckbox(i){ 
-    console.info('onChangeCheckbox ' + i);
-  }
+  function onChangeCheckbox(name){ 
+    console.info('onChangeCheckbox ' + name);
+    let checkboxes_ = {...checkboxes}; // old state
+    checkboxes_[name] = !checkboxes_[name];    
+    setCheckboxes(checkboxes_);
+    // TODO: update backend
+  } 
 
-  function onChangeShowEvents(i){ 
-    console.info('onChangeShowEvents ' + i);
-  }
+  function onChangeShowEvents(name){ 
+    console.info('onChangeShowEvents ' + name);
+  }  
 
-  // // call createTable
-  // createTable(process.iestudo);
-  // setCheckboxes([Array(parseInt(process_.iestudo.nprocs)).fill(true)]);
-  // setShowEvents([Array(parseInt(process_.iestudo.nprocs)).fill(true)]);
+  // this should only create data and set state variables
+  useEffect(() => {
+    const nrows = iestudo.nrows;  
+    const attrs = iestudo.attrs;
+    const attrs_names = iestudo.attrs_names;       
 
-  
+    var attributes = []; 
+    for(let i = 0; i < nrows; i++){
+      let row_dict = {};
+      for(let j = 0; j < attrs_names.length; j++)
+        row_dict[attrs_names[j].toLowerCase()] = String(attrs[i][j]).toLowerCase();
+      attributes.push(row_dict);   
+    }    
 
-  const nprocess = iestudo.nprocess;  
-  const nrows = iestudo.nrows;  
-  const object_table = iestudo.table;
-  // Converts object to an html <table>         
-  // * row_attrs (list, optional): List of columns to write as attributes in <tr> row element. Defaults to [] none.
-  // * row_cols (list, optional): List of columns to write as children in row <td> element. Defaults to all columns.                   
-  const row_attrs = ['Ativo', 'group', 'evindex', 'evn', 'display'];    
-  const order = ['Prior', 'Ativo', 'Processo', 'Evento', 'EvSeq', 'Descrição', 'Data', 
-          'Protocolo', 'EvPrior', 'Inativ', 'Obs', 'DOU', 'Dads', 'Sons',
-          'group', 'evindex', 'evn', 'display'];    
-  var array_table = []
-  // create array from object so table columns are properly ordered
-  for(let i=0; i<order.length; i++)
-    array_table.push([order[i], object_table[order[i]]]);
-  const row_cols  = order.filter((v) => ! row_attrs.includes(v) );          
-  // header of table - copy column names  
-  const header = row_cols.slice(0).map((value) => <th key={uuidv4()}>{value}</th> );  
-  // 2D array of cells on table
-  const ncol = row_cols.length;
-  //const cells = new Array(nrows*ncol).fill(null);
-  const cells = new Array(nrows).fill(0).map(() => new Array(ncol).fill(null));
-  // rows array 
-  var rows = new Array(nrows).fill(null);
-  // get process group name from row number
-  const getGroup = (i) => object_table.group[i];    
-  // invert the inverted table 
-  for(let irow = 0; irow < nrows; irow++){      
-    let attributes = {}; // single row attributes        
-    for(let j=0; j<order.length; j++){
-      let [name, dict] = array_table[j]; // ordered column dicts
-      // console.info('dict is ' + dict + ' name is ' + name + ' i ' + irow + ' j ' + j);                  
-      if(!row_attrs.includes(name)){     
-        switch (name){          
-          case 'Descrição': // show events change event
-            cells[irow][j] = 
-              <Cell value={dict[irow]} onClick={() => onChangeShowEvents(getGroup(irow))}/>;
-            break;           
-          case 'Prior':              
-            if(array_table[15][1][irow] == '0'){ // checkbox only 'evnindex'==0 (column 16-1)
-              let checked = (dict[irow]=='-1')?false:true;
-              //setCheckboxes(); // will case a re-render infinite loop - should be on useEffect
-              cells[irow][j] = <Cell 
-                value={<TinyCheckBox state={checked} onChange={()=> onChangeCheckbox(getGroup(irow))} />} />;
-            }
-            else{
-              cells[irow][j] = <Cell value={dict[irow]}/>;
-            }
-            break;           
-          default:
-            cells[irow][j] = <Cell value={dict[irow]}/>;
-        }
+    setCheckboxes(iestudo.checkboxes.states); // initial states
+    setEventview(iestudo.eventview); // initial states
+
+    setTable({
+        'header' : iestudo.headers, 
+        'attributes' : attributes,
+        'cells' : iestudo.table,
+        'checkboxes' : iestudo.checkboxes.indexes // only rendering information
+      });
+
+  },[iestudo]);
+
+  // this should only plot
+  // dont mess with state variables only slice/clone them before using  
+  function renderTableRows(){    
+    const checkboxes_indexes = table.checkboxes.slice();    
+    const attributes = table.attributes.slice();
+    var rcells = table.cells.map( (arr) => arr.slice() ); 
+    var rows = [];   
+
+    checkboxes_indexes.forEach(index => {
+      console.info(index, table.cells[index][2], checkboxes[table.cells[index][2]]);
+      // Prior checkbox - use 3rd column index 2 to get Process name [key]
+      rcells[index][0] = <Cell value={<TinyCheckBox state={checkboxes[table.cells[index][2]]}
+          onChange={()=> onChangeCheckbox(table.cells[index][2])} />} />;
+      rcells[index][5] = <Cell value={table.cells[index][5]}  
+          onClick={() => onChangeShowEvents(table.cells[index][2])}/>; 
+    });
+
+    for(let irow=0; irow<rcells.length; irow++) // column of 'Prior' [0] checkboxes and 'Descrição' [5]
+      for(let j=0; j<rcells[0].length; j++){
+        if( (j!=0 && j!=5) || !checkboxes_indexes.includes(irow) )
+          rcells[irow][j] = <Cell value={rcells[irow][j]}/>      
       }
-      else{ // if display column : should convert to javascript object first
-        if(name == 'display'){ // display row info turn in style = "display : none"
-          let display = (dict[irow] == 'false') ? 'none' : '';
-          attributes['style'] = {'display' : display};
-        }
-        else 
-          attributes[name.toLowerCase()] = dict[irow].toLowerCase();         
-      }    
-    }
-    rows.push(<tr {...attributes} key={irow*7-1}>{cells[irow]}</tr>);  
+
+    for(let i=0; i<rcells.length; i++)
+      rows.push(<tr key={uuidv4()} {...attributes[i]} >{rcells[i]}</tr>);
+    
+    return rows;
   }
 
-  // var columns = [];        
-  // Object.entries(object_table).forEach(([name, dict])=> { // go through columns          
-  //   let column = [];
-  //   console.info(name);
-  //   console.info(dict);            
-  //   column.push(<div>{name}</div>); // header of column
-  //   Object.values(dict). // column values
-  //     forEach((value) => { column.push(<div>{value}</div>); });
-  //     //console.info(column);  
-  //     //columns.push(<div className='tablecolumn'>{column}</div>);                        
-  // });
-  // console.info(columns);
-  // rows.push(<tr>{column}</tr>)
-  return (<div className='table'>     
-          <table>   
-            <thead>
-              <tr>{header}</tr>
-            </thead>    
-            <tbody>
-            {rows}
-            </tbody>
-          </table>
-          </div>);
+  if (table && table.header && table.cells)   
+    return (<div className='table'>     
+            <table>   
+              <thead>
+                {<tr> {table.header.map((value) => <th key={uuidv4()}>{value}</th> )} </tr>}
+              </thead>    
+              <tbody>
+              {renderTableRows()}
+              </tbody>
+            </table>
+            </div>);
+  else
+    return <div>Loading...</div>;
 }
 
 
