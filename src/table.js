@@ -3,7 +3,6 @@ import { useParams } from 'react-router-dom';
 import { clipboardCopy, rowStatus } from './utils';
 import { v4 as uuidv4 } from 'uuid';
 
-
 function TinyCheckBox({state, onChange}){  
   return (
     <input type='checkbox' checked={state} onChange={onChange}>
@@ -11,9 +10,9 @@ function TinyCheckBox({state, onChange}){
   );
 }
 
-function Cell({value, onClick}){ // undefined is the default if not set
+function Cell({key_, value, onClick}){ // undefined is the default if not set
    return (
-    <td key={uuidv4()} onClick={onClick}>{value}</td>
+    <td key={key_} onClick={onClick}>{value}</td>
   );
 }
 
@@ -28,18 +27,38 @@ function IeTable({iestudo}){
     let checkboxes_ = {...checkboxes}; // old state
     checkboxes_[name] = !checkboxes_[name];    
     setCheckboxes(checkboxes_);
-    // TODO: update backend
+
+    fetch("/flask/update_checkbox", {
+      method: "POST",
+      headers: {'Content-Type': 'application/json'}, 
+      body: JSON.stringify(checkboxes_)
+    }).then(function(response) {
+      // $("body").css("cursor", "default"); /* default cursor */
+    });          
+
   } 
 
   function onChangeShowEvents(name){ 
     console.info('onChangeShowEvents ' + name);
+    let eventview_ = {...eventview}; // old state
+    eventview_[name] = !eventview[name];    
+    setEventview(eventview_);
+
+    fetch("/flask/update_events_view", {
+      method: "POST",
+      headers: {'Content-Type': 'application/json'}, 
+      body: JSON.stringify(eventview_)
+    }).then(function(response) {
+      // $("body").css("cursor", "default"); /* default cursor */
+    });   
+
   }  
 
   // this should only create data and set state variables
   useEffect(() => {
-    const nrows = iestudo.nrows;  
+    const nrows = iestudo.table.length;  
     const attrs = iestudo.attrs;
-    const attrs_names = iestudo.attrs_names;       
+    const attrs_names = iestudo.attrs_names;    
 
     var attributes = []; 
     for(let i = 0; i < nrows; i++){
@@ -49,79 +68,91 @@ function IeTable({iestudo}){
       attributes.push(row_dict);   
     }    
 
-    setCheckboxes(iestudo.checkboxes.states); // initial states
-    setEventview(iestudo.eventview); // initial states
+    setCheckboxes(iestudo.states.checkboxes); // initial states
+    setEventview(iestudo.states.eventview); // initial states
 
     setTable({
         'header' : iestudo.headers, 
         'attributes' : attributes,
         'cells' : iestudo.table,
-        'checkboxes' : iestudo.checkboxes.indexes // only rendering information
+        'groupindexes' : iestudo.states.groupindexes, // only rendering information        
       });
 
   },[iestudo]);
 
   // this should only plot
   // dont mess with state variables only slice/clone them before using  
-  function renderTableRows(){    
-    const checkboxes_indexes = table.checkboxes.slice();    
+  function renderTableRows(){        
     const attributes = table.attributes.slice();
     var rcells = table.cells.map( (arr) => arr.slice() ); 
-    var rows = [];   
-
-    checkboxes_indexes.forEach(index => {
-      console.info(index, table.cells[index][2], checkboxes[table.cells[index][2]]);
-      // Prior checkbox - use 3rd column index 2 to get Process name [key]
-      rcells[index][0] = <Cell value={<TinyCheckBox state={checkboxes[table.cells[index][2]]}
-          onChange={()=> onChangeCheckbox(table.cells[index][2])} />} />;
-      rcells[index][5] = <Cell value={table.cells[index][5]}  
-          onClick={() => onChangeShowEvents(table.cells[index][2])}/>; 
+    var rows = [];          
+    
+    // add c0 or c1 class to group of process rows
+    Object.entries(table.groupindexes).forEach(([name, indexes], index) =>{       
+      let [start, end] = indexes.map(item => Number(item));
+      // console.info('name ... index', name, start, end, index);  
+      for(let i=start; i<end; i++)
+         attributes[i] = Object.assign(attributes[i], {className : `c${index%2}`});
     });
 
-    for(let irow=0; irow<rcells.length; irow++) // column of 'Prior' [0] checkboxes and 'Descrição' [5]
+    let headindexes = Object.values(table.groupindexes).map((element) => {
+      return Number(element[0]);
+    });
+    
+    // console.info('headindexes', headindexes);
+    for(let i=0; i<rcells.length; i++) 
       for(let j=0; j<rcells[0].length; j++){
-        if( (j!=0 && j!=5) || !checkboxes_indexes.includes(irow) )
-          rcells[irow][j] = <Cell value={rcells[irow][j]}/>      
+        if(headindexes.includes(i) && (j==0||j==5)){                    
+          let name = table.cells[i][2];
+          // console.info('checkboxes:', irow, name, checkboxes[name]);
+          switch(j){
+            case 0: // 'Prior' checkbox - use 3rd column index 2 to get Process name [key]          
+              rcells[i][0] = <Cell key_={`k${(i)}x${j}`} value={<TinyCheckBox state={checkboxes[name]}
+                onChange={() => onChangeCheckbox(name)}/>}/>;
+              break;
+            case 5: // 'Descrição' [5] - add event view change handler
+              rcells[i][5] = <Cell key_={`k${(i)}x${j}`} value={table.cells[i][5]}  
+                onClick={() => onChangeShowEvents(name)}/>; 
+              break;
+          }
+        }
+        else
+          rcells[i][j] = <Cell key_={`k${(i)}x${j}`} value={rcells[i][j]}/>      
       }
+    // console.warn('rows', JSON.stringify(rcells));
+    let row_hide = []
+    // remove event lines from rcells on creating <tr> rows
+    Object.entries(eventview).forEach( ([name, state]) => {
+      if(!state){ // if state is False remove event lines from that name process from table
+          let [start, end] = table.groupindexes[name];
+          for(let i=Number(start)+1; i<Number(end); i++) // remove all rows in ]start, end[
+            row_hide.push(i);
+      }
+    });        
 
-    for(let i=0; i<rcells.length; i++)
-      rows.push(<tr key={uuidv4()} {...attributes[i]} >{rcells[i]}</tr>);
+    let row_indexes =  Array.from(Array(attributes.length).keys()).filter((item) => !row_hide.includes(item));    
+    // console.info('row_indexes after', row_indexes);
+    row_indexes.forEach((i) => 
+      rows.push(<tr key={uuidv4(rcells[i])} {...attributes[i]} >{rcells[i]}</tr>)      
+    );
+
     
     return rows;
   }
 
   if (table && table.header && table.cells)   
-    return (<div className='table'>     
-            <table>   
+    return (<table>   
               <thead>
-                {<tr> {table.header.map((value) => <th key={uuidv4()}>{value}</th> )} </tr>}
+                {<tr>{table.header.map((value) => <th key={value}>{value}</th> )}</tr>}
               </thead>    
               <tbody>
               {renderTableRows()}
               </tbody>
-            </table>
-            </div>);
+            </table>);
   else
     return <div>Loading...</div>;
 }
 
-
-// $("input[type='checkbox']").click(function(event) {
-//   $("body").css("cursor", "progress"); /* wait cursor */               
-//   var data = []; 
-//   // get state of all checkboxes and update backend for all
-//   $("input[type='checkbox']").each(function(i, element) {          
-//     parent = element.parentElement.parentElement.getAttribute('group');          
-//     data.push([parent, element.checked]); // fill in list/array
-//   });
-//   fetch("/update_checkbox", {
-//     method: "POST",
-//     headers: {'Content-Type': 'application/json'}, 
-//     body: JSON.stringify(data)
-//   }).then(function(response) {
-//     $("body").css("cursor", "default"); /* default cursor */
-//   });          
-// });
 
 function TableAnalysis() {
   const { name } = useParams();
