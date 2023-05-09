@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+  import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { clipboardCopy, rowStatus } from './utils';
 import { v4 as uuidv4 } from 'uuid';
@@ -95,8 +95,7 @@ function IeTable({studyname, iestudo}){
     
     // add c0 or c1 class to group of process rows
     Object.entries(table.groupindexes).forEach(([name, indexes], index) =>{       
-      let [start, end] = indexes.map(item => Number(item));
-      console.info('name ... index', name, start, end, index);  
+      let [start, end] = indexes.map(item => Number(item));       
       for(let i=start; i<end; i++)
          attributes[i] = Object.assign(attributes[i], {className : `c${index%2}`});
     });
@@ -109,8 +108,7 @@ function IeTable({studyname, iestudo}){
     for(let i=0; i<rcells.length; i++) 
       for(let j=0; j<rcells[0].length; j++){
         if(headindexes.includes(i) && (j==0||j==5)){                    
-          let name = table.cells[i][2];
-          //console.info('checkboxes:', irow, name, checkboxes[name]);
+          let name = table.cells[i][2];          
           switch(j){
             case 0: // 'Prior' checkbox - use 3rd column index 2 to get Process name [key]          
               rcells[i][0] = <Cell key_={`k${(i)}x${j}`} value={<TinyCheckBox state={checkboxes[name]}
@@ -124,8 +122,8 @@ function IeTable({studyname, iestudo}){
         }
         else
           rcells[i][j] = <Cell key_={`k${(i)}x${j}`} value={rcells[i][j]}/>      
-      }
-    // console.warn('rows', JSON.stringify(rcells));
+      }    
+      
     let row_hide = []
     // remove event lines from rcells on creating <tr> rows
     Object.entries(eventview).forEach( ([name, state]) => {
@@ -188,6 +186,11 @@ function TableAnalysis() {
   let parent = process.parents ? process.parents[0] : 'None'; // leilão or disponibilidade
   document.title = `${name}`;
 
+
+  let analyze_table = <h3>No table found!</h3>;
+  if (process.iestudo.hasOwnProperty('table'))
+    analyze_table = <IeTable studyname={fmtdname} iestudo={process.iestudo}/>
+
   return (
     <>
     <div className="tablecontainer">
@@ -204,7 +207,7 @@ function TableAnalysis() {
           {rowStatus(process)}
         </div>      
       </div>        
-      <IeTable studyname={fmtdname} iestudo={process.iestudo}/>
+      {analyze_table}
     </div>
     </>
   );
