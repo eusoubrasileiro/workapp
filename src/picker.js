@@ -40,7 +40,7 @@ function PickProcess(){
 
   function fetchData(fast){
     // fast can be 'true' or 'false'
-    fetch(`/flask/json`, 
+    fetch(`/flask/list`, 
       { headers: { 
         'fast-refresh': fast } })
     .then(res => res.json()

@@ -16,7 +16,13 @@ function Cell({key_, value, onClick}){ // undefined is the default if not set
   );
 }
 
-function IeTable({iestudo}){
+
+// TODO href on scm process on table
+// $("tr[evindex='0']:not([evn='1']) td:nth-child(3)").wrap(function() {        
+//   return "<a href='/process?process="+$(this).text()+"'/></a>";
+// });
+
+function IeTable({studyname, iestudo}){
   // arrays of same size for checkboxes and showevents states  
   const [ table, setTable] = useState({});
   const [ checkboxes, setCheckboxes] = useState({});
@@ -31,7 +37,7 @@ function IeTable({iestudo}){
     fetch("/flask/update_checkbox", {
       method: "POST",
       headers: {'Content-Type': 'application/json'}, 
-      body: JSON.stringify(checkboxes_)
+      body: JSON.stringify({ 'name' : studyname, 'data' : checkboxes_ })
     }).then(function(response) {
       // $("body").css("cursor", "default"); /* default cursor */
     });          
@@ -44,10 +50,10 @@ function IeTable({iestudo}){
     eventview_[name] = !eventview[name];    
     setEventview(eventview_);
 
-    fetch("/flask/update_events_view", {
+    fetch("/flask/update_eventview", {
       method: "POST",
       headers: {'Content-Type': 'application/json'}, 
-      body: JSON.stringify(eventview_)
+      body: JSON.stringify({ 'name' : studyname, 'data' : eventview_ })
     }).then(function(response) {
       // $("body").css("cursor", "default"); /* default cursor */
     });   
@@ -90,7 +96,7 @@ function IeTable({iestudo}){
     // add c0 or c1 class to group of process rows
     Object.entries(table.groupindexes).forEach(([name, indexes], index) =>{       
       let [start, end] = indexes.map(item => Number(item));
-      // console.info('name ... index', name, start, end, index);  
+      console.info('name ... index', name, start, end, index);  
       for(let i=start; i<end; i++)
          attributes[i] = Object.assign(attributes[i], {className : `c${index%2}`});
     });
@@ -104,7 +110,7 @@ function IeTable({iestudo}){
       for(let j=0; j<rcells[0].length; j++){
         if(headindexes.includes(i) && (j==0||j==5)){                    
           let name = table.cells[i][2];
-          // console.info('checkboxes:', irow, name, checkboxes[name]);
+          //console.info('checkboxes:', irow, name, checkboxes[name]);
           switch(j){
             case 0: // 'Prior' checkbox - use 3rd column index 2 to get Process name [key]          
               rcells[i][0] = <Cell key_={`k${(i)}x${j}`} value={<TinyCheckBox state={checkboxes[name]}
@@ -140,7 +146,7 @@ function IeTable({iestudo}){
     return rows;
   }
 
-  if (table && table.header && table.cells)   
+  if (table && table.header && table.cells && studyname)   
     return (<table>   
               <thead>
                 {<tr>{table.header.map((value) => <th key={value}>{value}</th> )}</tr>}
@@ -161,13 +167,14 @@ function TableAnalysis() {
   const fmtdname = name.replace('-','/');
 
   useEffect(() => {
-    fetch(`/flask/json`, 
-      { headers: { 
-        'fast-refresh': 'true' } })
+    fetch(`/flask/analyze`, { 
+      method: "POST", 
+      headers: {'Content-Type': 'application/json'},     
+      body: JSON.stringify({ 'name' : fmtdname })
+    })
     .then(res => res.json()
-    .then(data => {      
-      let process_ = data.processos[fmtdname];
-      setProcess(process_);  
+    .then(data => {            
+      setProcess(data);  
     }))
     .catch((error) => {      
       console.info(`Error on Table request ${error}`);
@@ -176,7 +183,7 @@ function TableAnalysis() {
 
   // Must always use conditional rendering to wait for variables loading
   // and definition otherwise Error: `process.prioridade` undefined 
-  if (!process)  
+  if (!process )  
     return <div>Loading...</div>;    
   let parent = process.parents ? process.parents[0] : 'None'; // leilão or disponibilidade
   document.title = `${name}`;
@@ -197,7 +204,7 @@ function TableAnalysis() {
           {rowStatus(process)}
         </div>      
       </div>        
-      <IeTable iestudo={process.iestudo}/>
+      <IeTable studyname={fmtdname} iestudo={process.iestudo}/>
     </div>
     </>
   );
