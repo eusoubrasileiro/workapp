@@ -2,14 +2,13 @@
 Flask app to analyse interferencia table 
 and save it's 'prioridade' results direct from browser.add()
 Run from ~/Projects 
-python -m aidbag.anm.careas.estudos.app.main
+python -m workapp.main
 or to run on background
-nohup python -m aidbag.anm.careas.estudos.app.main 
+nohup python -m workapp.main
 """
 import sys, pathlib
 import pandas as pd 
 import argparse
-import tempfile
 
 from flask_cors import CORS
 from flask_caching import Cache
@@ -20,21 +19,19 @@ from flask import (
         send_from_directory
     )
 
-from ...config import config
-from ... import workflows as wf 
-from ...scm.processo import (
+from aidbag.anm.careas import config
+from aidbag.anm.careas import workflows as wf 
+from aidbag.anm.careas.scm.processo import (
         ProcessStorageUpdate,
         ProcessStorage
     )
-from ...scm.util import fmtPname
-from ...estudos.interferencia import (
+from aidbag.anm.careas.scm.util import fmtPname
+from aidbag.anm.careas.estudos.interferencia import (
         Interferencia, 
         prettyTabelaInterferenciaMaster
     )
 
-curpath = pathlib.Path(__file__).absolute().parents[0]
-   
-app = Flask(__name__, static_folder=curpath/'build')
+app = Flask(__name__, static_folder='build')
 
 # to allow the anm domain (js,html injection) request this app on localhost
 CORS(app) # This will enable CORS for all routes
@@ -214,20 +211,21 @@ cache.set('dbloaded', 0)
 cache.set('timespent', 99999.99e6)
 setCurrentProcessFolders()
 
-
-# Serve React App
-@app.route('/', defaults={'path': ''})
+# Serving 'production' React App from here flask
+@app.route('/')
+def index():
+    return send_from_directory('build', 'index.html')
 @app.route('/<path:path>')
-def serve(path):
-    if path != "" and pathlib.Path(app.static_folder + '/' + path).exists():
-        return send_from_directory(app.static_folder, path)
-    else:
-        return send_from_directory(app.static_folder, 'index.html')
+def static_proxy(path):
+    return send_from_directory('build', path)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('-d','--debug', default=True, action='store_true')    
-    args = parser.parse_args()    
-    app.config['Debug'] = args.debug
-    app.run(host='0.0.0.0', use_reloader=True, debug=args.debug, threaded=True, port=5000)   
+    parser.add_argument('-d','--dev', default=False, action='store_true')    
+    args = parser.parse_args()
+    if args.dev:
+        # do something nice on development when running from nodejs frontend
+        pass     
+    app.config['Debug'] = True
+    app.run(host='0.0.0.0', use_reloader=True, threaded=True, port=5000)   
     
