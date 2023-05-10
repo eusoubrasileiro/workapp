@@ -28,28 +28,18 @@ function IeTable({studyname, iestudo}){
   const [ checkboxes, setCheckboxes] = useState({});
   const [ eventview, setEventview] = useState({});
 
-  function onChangeCheckbox(name){ 
-    console.info('onChangeCheckbox ' + name);
-    let checkboxes_ = {...checkboxes}; // old state
-    checkboxes_[name] = !checkboxes_[name];    
-    setCheckboxes(checkboxes_);
 
+  function saveCheckboxes(checkboxes_){
     fetch("/flask/update_checkbox", {
       method: "POST",
       headers: {'Content-Type': 'application/json'}, 
       body: JSON.stringify({ 'name' : studyname, 'data' : checkboxes_ })
     }).then(function(response) {
       // $("body").css("cursor", "default"); /* default cursor */
-    });          
+    });   
+  }
 
-  } 
-
-  function onChangeShowEvents(name){ 
-    console.info('onChangeShowEvents ' + name);
-    let eventview_ = {...eventview}; // old state
-    eventview_[name] = !eventview[name];    
-    setEventview(eventview_);
-
+  function saveEventview(eventview_){
     fetch("/flask/update_eventview", {
       method: "POST",
       headers: {'Content-Type': 'application/json'}, 
@@ -57,7 +47,22 @@ function IeTable({studyname, iestudo}){
     }).then(function(response) {
       // $("body").css("cursor", "default"); /* default cursor */
     });   
+  }
 
+  function onChangeCheckbox(name){ 
+    console.info('onChangeCheckbox ' + name);
+    let checkboxes_ = {...checkboxes}; // old state
+    checkboxes_[name] = !checkboxes_[name];    
+    setCheckboxes(checkboxes_);
+    saveCheckboxes(checkboxes_);
+  } 
+
+  function onChangeShowEvents(name){ 
+    console.info('onChangeShowEvents ' + name);
+    let eventview_ = {...eventview}; // old state
+    eventview_[name] = !eventview[name];    
+    setEventview(eventview_);
+    saveEventview(eventview_);
   }  
 
   // this should only create data and set state variables
@@ -77,12 +82,20 @@ function IeTable({studyname, iestudo}){
     setCheckboxes(iestudo.states.checkboxes); // initial states
     setEventview(iestudo.states.eventview); // initial states
 
+    // since order matters for styling rows -> convert nested list in dictionary
+    // since javascript dictionary will now preserve order here
+    var groupindexes_dict = Object.fromEntries(iestudo.states.groupindexes);        
+
     setTable({
         'header' : iestudo.headers, 
         'attributes' : attributes,
         'cells' : iestudo.table,
-        'groupindexes' : iestudo.states.groupindexes, // only rendering information        
+        'groupindexes' : groupindexes_dict, // only rendering information        
       });
+
+    // already makes the first save of states
+    saveCheckboxes(iestudo.states.checkboxes);
+    saveEventview(iestudo.states.eventview);
 
   },[iestudo]);
 
@@ -92,7 +105,7 @@ function IeTable({studyname, iestudo}){
     const attributes = table.attributes.slice();
     var rcells = table.cells.map( (arr) => arr.slice() ); 
     var rows = [];          
-    
+
     // add c0 or c1 class to group of process rows
     Object.entries(table.groupindexes).forEach(([name, indexes], index) =>{       
       let [start, end] = indexes.map(item => Number(item));       
