@@ -12,7 +12,7 @@ function ProcessRow({name, dados}) {
       <Link to={`/table/${ name.replace('/', '-') }`} > {name} </Link> 
       <div><img src="https://sei.anm.gov.br/imagens/sei_logo_azul_celeste.jpg"></img></div>
       <div><button className="copyprocess" onClick={() => clipboardCopy(dados['NUP'])} > { dados['NUP'] }</button> </div>
-      <a className="SCM" href={`/flask/process?process=${name}`} target="_blank">SCM</a> 
+      <Link className="SCM" to={`/scm_page/${ name.replace('/', '-') }`} > SCM </Link>       
       {dados['tipo']}
       {rowStatus(dados)}     
     </> 
@@ -59,7 +59,7 @@ function PickProcess(){
   useEffect(() => {
     document.title = "Work";
     fetchData('true'); // first call must be fast
-    const interval_slow = setInterval(() => { fetchData('false') }, 15000);
+    const interval_slow = setInterval(() => { fetchData('false') }, 7000);
     window.addEventListener("beforeunload", slowRefresh);    
     return () => {  // on unmount component
       clearInterval(interval_slow);  // remove the timer

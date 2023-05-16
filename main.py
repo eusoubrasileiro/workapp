@@ -9,6 +9,7 @@ nohup python -m workapp.main
 import sys, pathlib
 import pandas as pd 
 import argparse
+import requests
 
 from flask_cors import CORS
 from flask_caching import Cache
@@ -25,7 +26,10 @@ from aidbag.anm.careas.scm.processo import (
         ProcessStorageUpdate,
         ProcessStorage
     )
-from aidbag.anm.careas.scm.util import fmtPname
+from aidbag.anm.careas.scm.util import (
+    fmtPname,
+    numberyearPname
+    )
 from aidbag.anm.careas.estudos.interferencia import (
         Interferencia, 
         prettyTabelaInterferenciaMaster
@@ -178,6 +182,17 @@ def update_collapse():
     updatedb(payload['name'], payload['data'], 'eventview')     
     return Response(status=204)
 
+from bs4 import BeautifulSoup as soup 
+
+# like /scm?process=830.691/2023
+@app.route('/flask/scm', methods=['GET'], strict_slashes=False)
+def scm_page():
+    name =  fmtPname(request.args.get('process'))
+    print(f'process is {name}', file=sys.stderr)
+    html_content = ProcessStorage[name]._pages['basic']['html']        
+    sp = soup(html_content, "html.parser")
+    res = sp.select('body form div table table:nth-child(3)')[0]    
+    return str(res)
 
 
 #
@@ -203,12 +218,16 @@ def iestudo_finish():
     key = request.args.get('process')    
     processo = ProcessStorage[fmtPname(key)] # since html comes without dot
     if 'iestudo' in processo._dados:
-        processo._dados['iestudo']['done'] = True
-        processo.changed() # force database update
+        processo._dados['iestudo']['done'] = True        
+    else:
+        processo._dados['iestudo'] = {'done': True};
+    processo.changed() # force database update
     return Response(status=204)
+
 
 cache.set('dbloaded', 0)
 cache.set('timespent', 99999.99e6)
+cache.set('processos_dict', {})
 setCurrentProcessFolders()
 
 # Serving 'production' React App from here flask

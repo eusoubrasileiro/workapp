@@ -14,7 +14,10 @@ function rowStatus(dados) {
 function clipboardCopy(text) {
     // property doesnt exist if not running from localhost or https 
     // TODO: check -> window.isSecureContext and alert      
-    navigator.clipboard.writeText(text);
+    if(navigator == undefined)
+        alert("must use localhost as domain name");
+    else 
+        navigator.clipboard.writeText(text);
 }
 
 

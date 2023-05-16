@@ -1,6 +1,7 @@
-  import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { clipboardCopy, rowStatus } from './utils';
+import { Link } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 
 function TinyCheckBox({state, onChange}){  
@@ -36,7 +37,10 @@ function IeTable({studyname, iestudo}){
       body: JSON.stringify({ 'name' : studyname, 'data' : checkboxes_ })
     }).then(function(response) {
       // $("body").css("cursor", "default"); /* default cursor */
-    });   
+    })
+    .catch((error) => {      
+      alert(`Error on saveCheckboxes request ${error}`);
+    });       
   }
 
   function saveEventview(eventview_){
@@ -46,7 +50,10 @@ function IeTable({studyname, iestudo}){
       body: JSON.stringify({ 'name' : studyname, 'data' : eventview_ })
     }).then(function(response) {
       // $("body").css("cursor", "default"); /* default cursor */
-    });   
+    })
+    .catch((error) => {      
+      alert(`Error on saveEventview request ${error}`);
+    });    
   }
 
   function onChangeCheckbox(name){ 
@@ -158,7 +165,7 @@ function IeTable({studyname, iestudo}){
   }
 
   if (table && table.header && table.cells && studyname)   
-    return (<table>   
+    return (<table id='iestudo'>   
               <thead>
                 {<tr>{table.header.map((value) => <th key={value}>{value}</th> )}</tr>}
               </thead>    
@@ -209,7 +216,7 @@ function TableAnalysis() {
     <div className="tablecontainer">
       <div className="navbarcontainer">
         <a>Prioridade: { process.prioridade }</a> 
-        <a href={`/flask/process?process=${fmtdname}`}> SCM </a> 
+        <Link className="SCM" to={`/scm_page/${ name.replace('/', '-') }`} > SCM </Link>  
         <button className="copyprocess" onClick={() => clipboardCopy(process.NUP)} > { process.NUP }</button>
           <div> 
             <a>1<sup>st</sup> parent: 
