@@ -5,6 +5,7 @@
     "react-dom": "^18.0.0",
     "react-router-dom": "^6.10.0",
     "react-scripts": "^5.0.0",
+    "react-tooltip": "^5.13.0",
     "uuid": "^9.0.0"
   },
   "main": "index.js",

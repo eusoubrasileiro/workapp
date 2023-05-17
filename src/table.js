@@ -3,6 +3,8 @@ import { useParams } from 'react-router-dom';
 import { clipboardCopy, rowStatus } from './utils';
 import { Link } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
+import { Tooltip } from 'react-tooltip'
+
 
 function TinyCheckBox({state, onChange}){  
   return (
@@ -11,10 +13,20 @@ function TinyCheckBox({state, onChange}){
   );
 }
 
-function Cell({key_, value, onClick}){ // undefined is the default if not set
+
+
+function Cell({key_, value, onClick, tooltip}){ // undefined is the default if not set
+
+  if(tooltip)  
    return (
-    <td key={key_} onClick={onClick}>{value}</td>
-  );
+    <td key={key_} onClick={onClick} 
+    data-tooltip-id="text-hidden-cell" data-tooltip-html={value} data-tooltip-variant="light">
+      {value}</td>
+  );  
+  return (
+   <td key={key_} onClick={onClick}>
+     {value}</td>
+ );
 }
 
 
@@ -126,22 +138,32 @@ function IeTable({studyname, iestudo}){
     
     // console.info('headindexes', headindexes);
     for(let i=0; i<rcells.length; i++) 
-      for(let j=0; j<rcells[0].length; j++){
-        if(headindexes.includes(i) && (j==0||j==5)){                    
-          let name = table.cells[i][2];          
-          switch(j){
-            case 0: // 'Prior' checkbox - use 3rd column index 2 to get Process name [key]          
-              rcells[i][0] = <Cell key_={`k${(i)}x${j}`} value={<TinyCheckBox state={checkboxes[name]}
+      for(let j=0; j<rcells[0].length; j++){                         
+        let name = table.cells[i][2];          
+        switch(j){
+          case 0: // 'Prior' checkbox - use 3rd column index 2 to get Process name [key]          
+            if(headindexes.includes(i))
+              rcells[i][j] = <Cell key_={`k${(i)}x${j}`} value={<TinyCheckBox state={checkboxes[name]}
                 onChange={() => onChangeCheckbox(name)}/>}/>;
-              break;
-            case 5: // 'Descrição' [5] - add event view change handler
-              rcells[i][5] = <Cell key_={`k${(i)}x${j}`} value={table.cells[i][5]}  
-                onClick={() => onChangeShowEvents(name)}/>; 
-              break;
-          }
-        }
-        else
-          rcells[i][j] = <Cell key_={`k${(i)}x${j}`} value={rcells[i][j]}/>      
+            else 
+              rcells[i][j] = <Cell key_={`k${(i)}x${j}`} value={rcells[i][j]}/>;      
+            break;
+          case 5: // 'Descrição' [5] - add event view change handler
+            if(headindexes.includes(i))
+            rcells[i][j] = <Cell key_={`k${(i)}x${j}`} value={table.cells[i][j]}  
+              onClick={() => onChangeShowEvents(name)}/>; 
+            else
+              rcells[i][j] = <Cell key_={`k${(i)}x${j}`} value={rcells[i][j]}/>;      
+            break;            
+          case 10: // Observação e DOU
+          case 11:
+              rcells[i][j] = <Cell key_={`k${(i)}x${j}`} value={table.cells[i][j]}                
+              tooltip={true}
+              />; 
+            break;
+          default:
+            rcells[i][j] = <Cell key_={`k${(i)}x${j}`} value={rcells[i][j]}/>;                  
+        }          
       }    
       
     let row_hide = []
@@ -171,6 +193,8 @@ function IeTable({studyname, iestudo}){
               </thead>    
               <tbody>
               {renderTableRows()}
+              <Tooltip id="text-hidden-cell" 
+              className="tooltipstyle" />
               </tbody>
             </table>);
   else
