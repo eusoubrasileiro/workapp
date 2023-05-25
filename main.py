@@ -6,10 +6,12 @@ python -m workapp.main
 or to run on background
 nohup python -m workapp.main
 """
-import sys, pathlib
+import sys, pathlib, shutil, os 
+import threading
+import time
 import pandas as pd 
 import argparse
-import requests
+import datetime
 
 from flask_cors import CORS
 from flask_caching import Cache
@@ -87,7 +89,7 @@ def startTableAnalysis():
     data = processobj.dict_dados()
     table_pd = None # pandas table
     if 'iestudo' not in data: # status of finished priority check on table
-        iestudo = {'iestudo' : {'done' : False } }        
+        iestudo = {'iestudo' : {'done' : False, 'time' : datetime.datetime.now() } }        
         processobj._dados.update(iestudo)  
         processobj.changed() # db save
         data.update(iestudo)
@@ -195,6 +197,7 @@ def scm_page():
     return str(res)
 
 
+
 #
 # routines regarding the `css_js_inject` chrome extension helper injection tool
 #
@@ -204,6 +207,7 @@ def get_prioridade():
     """return list (without dot on name) of interferentes with process if checked-market or not
     for use on css_js_inject tool"""
     key = request.args.get('process')    
+    print(f'process is {key}', file=sys.stderr)
     processo = ProcessStorage[fmtPname(key)] # since html comes without dot
     if ('iestudo' in processo._dados and 
         'states' in processo._dados['iestudo'] and 
@@ -212,16 +216,30 @@ def get_prioridade():
         return { key.replace(".", "") : value for key, value in dict_.items() } # remove dot for javascript use
     return {}
 
+
 @app.route('/flask/iestudo_finish', methods=['GET'])  
 def iestudo_finish():
-    """css_js_inject tool reports estudo finished"""
+    """css_js_inject helper tool
+     * reports estudo finished
+     * saves estudo pdf on Downloads folder as R_xxxxxx_xxx.pdf format"""
     key = request.args.get('process')    
     processo = ProcessStorage[fmtPname(key)] # since html comes without dot
+    finished = {'done': True, 'time' : datetime.datetime.now()}  
     if 'iestudo' in processo._dados:
-        processo._dados['iestudo']['done'] = True        
+        processo._dados['iestudo'].update(finished)
     else:
-        processo._dados['iestudo'] = {'done': True};
+        processo._dados['iestudo'] = finished
     processo.changed() # force database update
+    # wait some 15 seconds and copy the R pdf from download folder to correct folder....
+    def move_pdf():
+        time.sleep(15)
+        number, year = numberyearPname(key)
+        # search by the latest (1)(2) etc...        
+        source_pdfs = pathlib.Path(pathlib.Path.home() / "Downloads").glob(f"R_{number}_{year}*")
+        sorted(source_pdfs, key=os.path.getctime, reverse=True) # sort by most recent 
+        pdf_path = pathlib.Path(config['processos_path']) / f"{number}-{year}" / "R.pdf" 
+        shutil.copy(source_pdfs[0], pdf_path) # get the most recent [0]
+    threading.Thread(target=move_pdf).start()
     return Response(status=204)
 
 
@@ -248,3 +266,14 @@ if __name__ == '__main__':
     app.config['Debug'] = True
     app.run(host='0.0.0.0', use_reloader=True, threaded=True, port=5000)   
     
+
+
+# To think about if saving the page table is enough
+# From html would work still?
+
+# from bs4 import BeautifulSoup as soup 
+# for name, obj in scm.ProcessStorage.items():
+#     sp = soup(obj._pages['basic']['html'], "html.parser")
+#     res = sp.select('body form div table table:nth-child(3)')[0]
+#     obj._pages['basic']['html'] = str(res) 
+#     obj.changed()

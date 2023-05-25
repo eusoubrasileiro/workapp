@@ -8,6 +8,7 @@
 
 checked_dict = {}; // get dict of processes marked on database
 var mainprocess;
+var study_finished=false;
 
 const backend_url = 'http://127.0.0.1:5000/flask'
 
@@ -20,6 +21,7 @@ function highlight_checkboxes_prioridade(){
 
   console.log(`Process in analysis is ${mainprocess}`)
   mainprocess = getmainprocess();
+  document.title = 'SIG-Áreas['+mainprocess+']';
   fetch(`${backend_url}/get_prioridade?process=${mainprocess}`)
   .then(res => res.json()
   .then( data => { 
@@ -75,10 +77,16 @@ if(document.querySelector('body form').getAttribute('action') == 'Mapa.aspx?estu
     // console.info("mousedown  target is "+ event.target + " target parent is " + event.target.parentElement + " parent attributes");
     parent_id = event.target.parentElement.getAttribute("id")
     console.log("parent id attribute " + parent_id);
-    if (parent_id == 'ctl00_cphConteudo_Toolbar1ExecutarEstudo' || 
-        parent_id == 'ctl00_cphConteudo_Toolbar1GerarRelatorio' ||
-        parent_id == 'ctl00_cphConteudo_Toolbar1FinalizarEstudo' )
-      fetch(`${backend_url}/iestudo_finish?process=${mainprocess}`); // make database know this estudo is finished
+    if (!study_finished && 
+        ( parent_id == 'ctl00_cphConteudo_Toolbar1GerarRelatorio' ||
+          parent_id == 'ctl00_cphConteudo_Toolbar1FinalizarEstudo') 
+        ){
+        // make database know this estudo is finished
+        fetch(`${backend_url}/iestudo_finish?process=${mainprocess}`).then((response) =>{          
+          study_finished = true; 
+          downloadDocument();  
+        });
+      }
   };
 
     // didn't load list of checkbox reload it on ENTER
@@ -90,6 +98,27 @@ if(document.querySelector('body form').getAttribute('action') == 'Mapa.aspx?estu
 
     // force refresh of checkboxes navbar
     $checkboxes.change();
+
+    // download Relatorio to download folder
+    function downloadDocument() {
+      let [number, year] = mainprocess.split('/');
+      const downloadUrl = `http://sigareas.dnpm.gov.br/Paginas/Usuario/Imprimir.aspx?estudo=1&tipo=RELATORIO&numero=${number}&ano=${year}`;
+
+      const anchorElement = document.createElement('a');
+      anchorElement.href = downloadUrl;
+      anchorElement.download = `R_${number}_${year}.pdf`;  
+      document.body.appendChild(anchorElement);
+      anchorElement.click();
+      document.body.removeChild(anchorElement);
+    }
+
+    window.onbeforeunload = function() { // just to make sure
+      if(!study_finished){
+        fetch(`${backend_url}/iestudo_finish?process=${mainprocess}`); // make database know this estudo is finished
+        // Call the download function
+        downloadDocument();      
+      }
+    };
 
   });
 
