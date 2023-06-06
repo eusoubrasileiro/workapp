@@ -199,7 +199,7 @@ def scm_page():
 
 
 #
-# routines regarding the `css_js_inject` chrome extension helper injection tool
+# routines used by the `css_js_inject` chrome extension helper injection tool
 #
 
 @app.route('/flask/get_prioridade', methods=['GET'])  # like /get_prioridade?process=830.691/2023
@@ -235,8 +235,8 @@ def iestudo_finish():
         time.sleep(15)
         number, year = numberyearPname(key)
         # search by the latest (1)(2) etc...        
-        source_pdfs = pathlib.Path(pathlib.Path.home() / "Downloads").glob(f"R_{number}_{year}*")
-        sorted(source_pdfs, key=os.path.getctime, reverse=True) # sort by most recent 
+        source_pdfs = list(pathlib.Path(pathlib.Path.home() / "Downloads").glob(f"R_{number}_{year}*"))
+        source_pdfs = sorted(source_pdfs, key=os.path.getctime, reverse=True) # sort by most recent 
         pdf_path = pathlib.Path(config['processos_path']) / f"{number}-{year}" / "R.pdf" 
         shutil.copy(source_pdfs[0], pdf_path) # get the most recent [0]
     threading.Thread(target=move_pdf).start()
@@ -262,9 +262,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
     if args.dev:
         # do something nice on development when running from nodejs frontend
-        pass     
-    app.config['Debug'] = True
-    app.run(host='0.0.0.0', use_reloader=True, threaded=True, port=5000)   
+        pass 
+    app.run(host='0.0.0.0', use_reloader=True, debug=args.dev, threaded=True, port=5000)   
     
 
 
