@@ -7,7 +7,7 @@
 // </footer> 
 
 checked_dict = {}; // get dict of processes marked on database
-var mainprocess;
+var mainprocess="xxxxxx/2022"; // default to RE-download on SIGAREAS page
 var study_finished=false;
 
 const backend_url = 'http://127.0.0.1:5000/flask'
@@ -46,17 +46,33 @@ function highlight_checkboxes_prioridade(){
     });  
 }
 
+
+// download Relatorio to download folder
+function downloadDocument() {
+  let [number, year] = mainprocess.split('/');
+  const downloadUrl = `http://sigareas.dnpm.gov.br/Paginas/Usuario/Imprimir.aspx?estudo=1&tipo=RELATORIO&numero=${number}&ano=${year}`;
+
+  const anchorElement = document.createElement('a');
+  anchorElement.href = downloadUrl;
+  anchorElement.download = `R_${number}_${year}.pdf`;  
+  document.body.appendChild(anchorElement);
+  anchorElement.click();
+  document.body.removeChild(anchorElement);
+}
+
 // to make sure we are at r. interferencia page not estudo=10,2,3,5 or any other 
 if(document.querySelector('body form').getAttribute('action') == 'Mapa.aspx?estudo=1')
   $( document ).ready(function() {
 
+    let process_name = getmainprocess();
     // navbar to count number of of checkboxes checked and unchecked
     const header_html = `
-      <div class="navbarcontainer">
+      <div class="navbarcontainer">        
         <div class="navbar">
-            <div class="navrow h1"> ${getmainprocess()} </div>
-            <div class="navrow h2"> checkboxes <span id="count-checkboxes">0</span> </div> 
-            <div class="navrow h2"> checked <span id="count-checked-checkboxes">0</span> </div>        
+            <div class="h1">Workapp<div>
+            <div class="h1"> ${process_name} </div>
+            <div class="h2"> checkboxes <span id="count-checkboxes">0</span> </div> 
+            <div class="h2"> checked <span id="count-checked-checkboxes">0</span> </div>        
         </div>
       </div>
     `;
@@ -91,26 +107,13 @@ if(document.querySelector('body form').getAttribute('action') == 'Mapa.aspx?estu
 
     // didn't load list of checkbox reload it on ENTER
     $(document).keypress(function(e) { 
-      if(e.which == 13) {
+      if(e.key == 'Enter') {
         highlight_checkboxes_prioridade();
       }
     });
 
     // force refresh of checkboxes navbar
     $checkboxes.change();
-
-    // download Relatorio to download folder
-    function downloadDocument() {
-      let [number, year] = mainprocess.split('/');
-      const downloadUrl = `http://sigareas.dnpm.gov.br/Paginas/Usuario/Imprimir.aspx?estudo=1&tipo=RELATORIO&numero=${number}&ano=${year}`;
-
-      const anchorElement = document.createElement('a');
-      anchorElement.href = downloadUrl;
-      anchorElement.download = `R_${number}_${year}.pdf`;  
-      document.body.appendChild(anchorElement);
-      anchorElement.click();
-      document.body.removeChild(anchorElement);
-    }
 
     window.onbeforeunload = function() { // just to make sure
       if(!study_finished){
@@ -121,8 +124,28 @@ if(document.querySelector('body form').getAttribute('action') == 'Mapa.aspx?estu
     };
 
   });
+else{ // to show on sigareas page - to know it
+  let interf_page_check = $('span#ctl00_cphConteudo_lblTitulo');
 
+    const header_html = `
+    <div class="navbarcontainer">
+      <div class="navbar">
+        <div class="h1">Workapp<div>         
+      </div>
+    </div>
+  `;
+    document.querySelector("body").insertAdjacentHTML("beforeend", header_html);  
+}
 
+// Re-Download last study on 'R' press
+// don't update study finished tough
+$(document).keypress(function(e) {   
+  if(e.key == 'r') {
+    downloadDocument();
+  }
+  // TODO: warn backend to parse pdf and then
+  // move it to the proper place also updating finesh status
+});
 
 
 
