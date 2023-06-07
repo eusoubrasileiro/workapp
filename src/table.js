@@ -141,6 +141,10 @@ function IeTable({studyname, iestudo}){
       for(let j=0; j<rcells[0].length; j++){                         
         let name = table.cells[i][2];          
         switch(j){
+          case 2:            
+              rcells[i][j] = <Cell key_={`k${(i)}x${j}`} 
+                value={ <Link className="SCM_link" to={`/scm_page/${ name.replace('/', '-') }`} > {name} </Link> }/>; 
+            break;
           case 0: // 'Prior' checkbox - use 3rd column index 2 to get Process name [key]          
             if(headindexes.includes(i))
               rcells[i][j] = <Cell key_={`k${(i)}x${j}`} value={<TinyCheckBox state={checkboxes[name]}

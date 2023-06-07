@@ -110,6 +110,9 @@ if(document.querySelector('body form').getAttribute('action') == 'Mapa.aspx?estu
       if(e.key == 'Enter') {
         highlight_checkboxes_prioridade();
       }
+      if(e.key == 'r') {
+        downloadDocument();
+      }      
     });
 
     // force refresh of checkboxes navbar
