@@ -103,8 +103,8 @@ button.copyprocess:active {
 /* OBS(7) DOU(8)
  set max-width with rem - 
 don't need to read at first glance */
-#iestudo tr td:nth-child(11), 
-#iestudo tr td:nth-child(12) {
+#iestudo tr td:nth-child(10), 
+#iestudo tr td:nth-child(11) {
   max-width: 15rem !important;
 } 
 

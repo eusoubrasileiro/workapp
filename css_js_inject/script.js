@@ -71,8 +71,7 @@ if(document.querySelector('body form').getAttribute('action') == 'Mapa.aspx?estu
         <div class="navbar">
             <div class="h1">Workapp<div>
             <div class="h1"> ${process_name} </div>
-            <div class="h2"> checkboxes <span id="count-checkboxes">0</span> </div> 
-            <div class="h2"> checked <span id="count-checked-checkboxes">0</span> </div>        
+            <div class="h2"> checked <span id="count-checked-checkboxes">0</span>/<span id="count-checkboxes">0</span> </div>        
         </div>
       </div>
     `;
@@ -105,26 +104,27 @@ if(document.querySelector('body form').getAttribute('action') == 'Mapa.aspx?estu
       }
   };
 
+  function finished(){
+    if(!study_finished){
+      fetch(`${backend_url}/iestudo_finish?process=${mainprocess}`); // make database know this estudo is finished
+      // Call the download function
+      downloadDocument();      
+    }
+  }
+
     // didn't load list of checkbox reload it on ENTER
     $(document).keypress(function(e) { 
       if(e.key == 'Enter') {
         highlight_checkboxes_prioridade();
       }
       if(e.key == 'r') {
-        downloadDocument();
+        finished();
       }      
     });
 
     // force refresh of checkboxes navbar
     $checkboxes.change();
-
-    window.onbeforeunload = function() { // just to make sure
-      if(!study_finished){
-        fetch(`${backend_url}/iestudo_finish?process=${mainprocess}`); // make database know this estudo is finished
-        // Call the download function
-        downloadDocument();      
-      }
-    };
+    window.onbeforeunload = finished;
 
   });
 else{ // to show on sigareas page - to know it

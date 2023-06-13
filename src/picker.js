@@ -10,7 +10,7 @@ function ProcessRow({name, dados}) {
   return (
     <>
       <Link to={`/table/${ name.replace('/', '-') }`} > {name} </Link> 
-      <div><img src="https://sei.anm.gov.br/imagens/sei_logo_azul_celeste.jpg"></img></div>
+      <div><img src="https://sei.anm.gov.br/imagens/sei_logo_azul_celeste.jpg" width="25"></img></div>
       <div><button className="copyprocess" onClick={() => clipboardCopy(dados['NUP'])} > { dados['NUP'] }</button> </div>
       <Link className="SCM" to={`/scm_page/${ name.replace('/', '-') }`} > SCM </Link>       
       {dados['tipo']}

@@ -62,10 +62,11 @@ def htmlTableList(table):
     # for backward compatibility rearrange columns
     table = table[['Prior', 'Ativo', 'Processo', 'Evento', 'EvSeq', 'Descrição', 'Data', 
             'DataPrior', 'EvPrior', 'Inativ', 'Obs', 'DOU', 'Dads', 'Sons',
-            'evindex', 'evn']] 
-    # rename columns 
-    if 'DataPrior' in table.columns:
-        table.rename(columns={'DataPrior' : 'Protocolo'}, inplace=True)
+            'evindex', 'evn']]     
+    if 'DataPrior' in table.columns: # rename columns 
+        table.rename(columns={'DataPrior' : 'Protocolo'}, inplace=True)           
+    if 'Protocolo' in table.columns: # remove useless column
+        table.drop(columns=['Protocolo'], inplace=True)        
     row_attrs = ['Ativo', 'evindex', 'evn'] # List of columns add as attributes in each row element.
     row_cols = table.columns.to_list() # List of columns to write as children in row element. By default, all columns
     row_cols = [ v for v in row_cols if v not in ['evindex', 'evn'] ] # dont use these as columns 
@@ -232,13 +233,17 @@ def iestudo_finish():
     processo.changed() # force database update
     # wait some 15 seconds and copy the R pdf from download folder to correct folder....
     def move_pdf():
-        time.sleep(15)
-        number, year = numberyearPname(key)
-        # search by the latest (1)(2) etc...        
-        source_pdfs = list(pathlib.Path(pathlib.Path.home() / "Downloads").glob(f"R_{number}_{year}*"))
-        source_pdfs = sorted(source_pdfs, key=os.path.getctime, reverse=True) # sort by most recent 
-        pdf_path = pathlib.Path(config['processos_path']) / f"{number}-{year}" / "R.pdf" 
-        shutil.copy(source_pdfs[0], pdf_path) # get the most recent [0]
+        try:
+            time.sleep(15)
+            number, year = numberyearPname(key)
+            # search by the latest (1)(2) etc...        
+            source_pdfs = list(pathlib.Path(pathlib.Path.home() / "Downloads").glob(f"R_{number}_{year}*"))
+            source_pdfs = sorted(source_pdfs, key=os.path.getctime, reverse=True) # sort by most recent 
+            pdf_path = pathlib.Path(config['processos_path']) / f"{number}-{year}" / "R.pdf" 
+            shutil.copy(source_pdfs[0], pdf_path) # get the most recent [0]
+        except IndexError: # big pdf, slow download-processing by sigareas
+            time.sleep(15) # wait a bit more
+            move_pdf()
     threading.Thread(target=move_pdf).start()
     return Response(status=204)
 
@@ -263,7 +268,7 @@ if __name__ == '__main__':
     if args.dev:
         # do something nice on development when running from nodejs frontend
         pass 
-    app.run(host='0.0.0.0', use_reloader=True, debug=args.dev, threaded=True, port=5000)   
+    app.run(host='0.0.0.0', debug=args.dev, port=5000)   
     
 
 
