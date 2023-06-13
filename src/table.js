@@ -243,7 +243,7 @@ function TableAnalysis() {
     <>
     <div className="tablecontainer">
       <div className="navbarcontainer">
-        <a>Prioridade: { process.prioridade }</a> 
+        <a id='prioridade'>Prioridade: <span id='prioridade_data'>{ process.prioridade }</span> </a> 
         <Link className="SCM" to={`/scm_page/${ name.replace('/', '-') }`} > SCM </Link>  
         <button className="copyprocess" onClick={() => clipboardCopy(process.NUP)} > { process.NUP }</button>
           <div> 

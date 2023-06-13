@@ -67,6 +67,8 @@ def htmlTableList(table):
         table.rename(columns={'DataPrior' : 'Protocolo'}, inplace=True)           
     if 'Protocolo' in table.columns: # remove useless column
         table.drop(columns=['Protocolo'], inplace=True)        
+    if 'EvSeq' in table.columns:
+        table.rename(columns={'EvSeq' : '#'}, inplace=True)    
     row_attrs = ['Ativo', 'evindex', 'evn'] # List of columns add as attributes in each row element.
     row_cols = table.columns.to_list() # List of columns to write as children in row element. By default, all columns
     row_cols = [ v for v in row_cols if v not in ['evindex', 'evn'] ] # dont use these as columns 
@@ -88,6 +90,7 @@ def startTableAnalysis():
     name = request.get_json()['name']
     processobj = ProcessStorage[name]
     data = processobj.dict_dados()
+    data['prioridade'] = processobj['prioridade'].strftime("%d/%m/%Y %H:%M:%S") 
     table_pd = None # pandas table
     if 'iestudo' not in data: # status of finished priority check on table
         iestudo = {'iestudo' : {'done' : False, 'time' : datetime.datetime.now() } }        
