@@ -17,7 +17,9 @@ function getmainprocess(){
     return $("table#ctl00_cphConteudo_gvLowerLeft tbody tr td:first-child")[0].innerText;
 }
 
-function highlight_checkboxes_prioridade(){
+const sleep = 400; // sleep between clicks
+
+function highlight_set_checkboxes_prioridade(){
 
   console.log(`Process in analysis is ${mainprocess}`)
   mainprocess = getmainprocess();
@@ -26,17 +28,24 @@ function highlight_checkboxes_prioridade(){
   .then(res => res.json()
   .then( data => { 
     checked_dict = data;
+    let sleep_time=sleep; // start 
     if(Object.keys(checked_dict).length === 0 )
       console.warn('No checkbox data. No table?');
     else
       $("table#ctl00_cphConteudo_gvLowerRight tbody tr td label[onclick='IdentificarProcesso(this);']").each(
         function(i, element) { 
             let process = element.innerText;
-            console.log(`${process} is ${checked_dict[process]}`);
             element.style.fontWeight = 'bolder';
-            element.style.fontStyle = 'oblique';
+            element.style.fontStyle = 'oblique';                    
+            console.info(`${process} is ${checked_dict[process]}`);
             if(checked_dict[process] == '0'){ // style to red the ones to uncheck
               element.style.color = 'red';
+              let checkbox = $(`table#ctl00_cphConteudo_gvLowerRight tbody tr td input[class^="${process}"]`).first()[0];
+              console.info(`checkbox is ${checkbox}`);
+              if(checkbox.checked){        
+                setTimeout(() => checkbox.click(), sleep_time); // uncheck it
+                sleep_time += sleep;
+              }    
             }
         }
       );
@@ -84,7 +93,7 @@ if(document.querySelector('body form').getAttribute('action') == 'Mapa.aspx?estu
       $('#count-checked-checkboxes').text(countCheckedCheckboxes);
     });
 
-    highlight_checkboxes_prioridade();
+    highlight_set_checkboxes_prioridade();
 
   // adding callback to update on database when estudo is finished 9th and 10th tr on toolbar
   document.onmousedown = function (event) {
@@ -115,7 +124,7 @@ if(document.querySelector('body form').getAttribute('action') == 'Mapa.aspx?estu
     // didn't load list of checkbox reload it on ENTER
     $(document).keypress(function(e) { 
       if(e.key == 'Enter') {
-        highlight_checkboxes_prioridade();
+        highlight_set_checkboxes_prioridade();
       }
       if(e.key == 'r') {
         finished();
