@@ -59,7 +59,7 @@ function PickProcess(){
     const currentTime = new Date().getTime();
     const prevtime = sessionStorage.getItem('prevtime') || 0;
     let timeDifference = currentTime - prevtime;      
-    console.log(`timeDifference ${timeDifference}`);
+    // console.log(`timeDifference ${timeDifference}`);
     if (timeDifference >= 20000) {
       sessionStorage.setItem('prevtime', currentTime);
       fetchData('false');      
