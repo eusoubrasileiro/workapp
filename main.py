@@ -140,15 +140,15 @@ def setCurrentProcessFolders():
 
 @app.route('/flask/list', methods=['GET'])
 def getProcessos():                  
-    fast_refresh = request.headers.get('fast-refresh', 'false')  # use request header information identify it
+    fast_refresh = request.headers.get('fast-refresh', 'false')  # use request header information identify it        
     if fast_refresh == 'true': # frequent refresh by setInterval javascript 15 seconds
-        print("Making a fast-refresh", file=sys.stderr)
+        print("Making a fast-refresh", file=sys.stderr)                
     else:         
         print("Making a slow-refresh re-reading the entire database", file=sys.stderr)
         dbloaded, timespent = ProcessStorageUpdate(False, background=False) # update processes from sqlite database    
         cache.set('dbloaded', dbloaded)
-        cache.set('timespent', round(timespent,2))
-        setCurrentProcessFolders()  # update processes folder from working folder
+        cache.set('timespent', round(timespent,2))        
+    setCurrentProcessFolders()  # update processes folder from working folder
     return { 
             'processos' : cache.get('processos_dict'),
             'status'    : { 

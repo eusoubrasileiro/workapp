@@ -38,7 +38,7 @@ function PickProcess(){
   const [data, setData] = useState([]);
   const [processos, setProcessos] = useState({});
 
-  function fetchData(fast){
+  function fetchData(fast = 'false'){
     // fast can be 'true' or 'false'
     fetch(`/flask/list`, 
       { headers: { 
@@ -62,7 +62,7 @@ function PickProcess(){
     // console.log(`timeDifference ${timeDifference}`);
     if (timeDifference >= 20000) {
       sessionStorage.setItem('prevtime', currentTime);
-      fetchData('false');      
+      fetchData();      
     } 
   }
 
