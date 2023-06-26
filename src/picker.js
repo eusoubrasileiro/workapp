@@ -53,17 +53,25 @@ function PickProcess(){
     });      
   }
 
-  // F5 or refresh causes a slow-refresh
-  const slowRefresh = () => fetchData('false');  
+  // F5 or refresh causes a slow-refresh since SessionStorage is cleaned to 0
+  // going to another page and comming back keeps the counters running
+  function slowRefreshIf(){
+    const currentTime = new Date().getTime();
+    const prevtime = sessionStorage.getItem('prevtime') || 0;
+    let timeDifference = currentTime - prevtime;      
+    console.log(`timeDifference ${timeDifference}`);
+    if (timeDifference >= 20000) {
+      sessionStorage.setItem('prevtime', currentTime);
+      fetchData('false');      
+    } 
+  }
 
   useEffect(() => {
-    document.title = "Work";
+    document.title = "Work";    
     fetchData('true'); // first call must be fast
-    const interval_slow = setInterval(() => { fetchData('false') }, 7000);
-    window.addEventListener("beforeunload", slowRefresh);    
+    const time_check = setInterval(() => { slowRefreshIf(); }, 500);
     return () => {  // on unmount component
-      clearInterval(interval_slow);  // remove the timer
-      window.removeEventListener("beforeunload", slowRefresh);
+      clearInterval(time_check);  // remove the timer    
     }; 
   }, []); // will run only once
 

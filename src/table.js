@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { clipboardCopy, rowStatus } from './utils';
 import { Link } from 'react-router-dom';
@@ -40,6 +40,7 @@ function IeTable({studyname, iestudo}){
   const [ table, setTable] = useState({});
   const [ checkboxes, setCheckboxes] = useState({});
   const [ eventview, setEventview] = useState({});
+  const startstate = useRef(false); // modifying it doesn't causes re-renders
 
 
   function saveCheckboxes(checkboxes_){
@@ -112,10 +113,6 @@ function IeTable({studyname, iestudo}){
         'groupindexes' : groupindexes_dict, // only rendering information        
       });
 
-    // already makes the first save of states
-    saveCheckboxes(iestudo.states.checkboxes);
-    saveEventview(iestudo.states.eventview);
-
   },[iestudo]);
 
   // this should only plot
@@ -186,6 +183,12 @@ function IeTable({studyname, iestudo}){
       rows.push(<tr key={uuidv4(rcells[i])} {...attributes[i]} >{rcells[i]}</tr>)      
     );
 
+    // save of states in case
+    if(!startstate.current){
+      saveCheckboxes(iestudo.states.checkboxes);
+      saveEventview(iestudo.states.eventview);
+      startstate.current = true;
+    }
     
     return rows;
   }
