@@ -40,8 +40,7 @@ function IeTable({studyname, iestudo}){
   const [ table, setTable] = useState({});
   const [ checkboxes, setCheckboxes] = useState({});
   const [ eventview, setEventview] = useState({});
-  const startstate = useRef(false); // modifying it doesn't causes re-renders
-
+  
 
   function saveCheckboxes(checkboxes_){
     fetch("/flask/update_checkbox", {
@@ -182,14 +181,7 @@ function IeTable({studyname, iestudo}){
     row_indexes.forEach((i) => 
       rows.push(<tr key={uuidv4(rcells[i])} {...attributes[i]} >{rcells[i]}</tr>)      
     );
-
-    // save of states in case
-    if(!startstate.current){
-      saveCheckboxes(iestudo.states.checkboxes);
-      saveEventview(iestudo.states.eventview);
-      startstate.current = true;
-    }
-    
+   
     return rows;
   }
 
