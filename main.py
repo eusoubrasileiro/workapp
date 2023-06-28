@@ -12,6 +12,7 @@ import time
 import pandas as pd 
 import argparse
 import datetime
+import copy
 
 from flask_cors import CORS
 from flask_caching import Cache
@@ -48,7 +49,7 @@ app.config['CACHE_DIR'] = pathlib.Path("~/.workapp/cache") #  temporary director
 app.config['CACHE_TYPE'] = 'FileSystemCache' 
 cache = Cache(app)
 
-def htmlTableList(table): 
+def jsTableData(table): 
     """create data to be send as JSON to frontend to create <table><tr><th><td> etc. """
     # additional columns created for stilying or UI/UX with css, jquery, jscript
     if table is None: 
@@ -89,45 +90,54 @@ def htmlTableList(table):
 def startTableAnalysis():
     name = request.get_json()['name']
     processobj = ProcessStorage[name]
-    data = processobj.dict_dados()
-    data['prioridade'] = processobj['prioridade'].strftime("%d/%m/%Y %H:%M:%S") 
+    dados = processobj.dict_dados() # table/states read here    
     table_pd = None # pandas table
-    if 'iestudo' not in data: # status of finished priority check on table
-        iestudo = {'iestudo' : {'done' : False, 'time' : datetime.datetime.now() } }        
-        processobj._dados.update(iestudo)  
-        processobj.changed() # db save
-        data.update(iestudo)
-    if 'iestudo' in data and 'table' in data['iestudo']: 
-        table_pd = pd.DataFrame.from_dict(data['iestudo']['table'])
-    else:
+    dbdata = {'iestudo' : {} } # to update-add process|database table/states 'iestudo' info
+    if 'iestudo' in dados and 'table' in dados['iestudo']: # from database
+        dbdata['iestudo'] = copy.deepcopy(dados['iestudo']) # already present
+        table_pd = pd.DataFrame.from_dict(dados['iestudo']['table'])        
+    else: # from legacy excel   
         try:
-            print(f"{data['NUP']} Not using database json! Loading from legacy excel table.", file=sys.stderr)
+            print(f"{dados['NUP']} Not using database json! Loading from legacy excel table.", file=sys.stderr)
             estudo = Interferencia.from_excel(wf.ProcessPathStorage[name])        
-            table_pd = estudo.tabela_interf_master
-            table_pd = prettyTabelaInterferenciaMaster(table_pd, view=False)
-            processobj._dados.update({'iestudo' : { 'table' : table_pd.to_dict() }})  
-            processobj.changed() # db save
+            table_pd = prettyTabelaInterferenciaMaster(estudo.tabela_interf_master, view=False)
         except RuntimeError:
             table_pd = None
+    # make the payload for javascript    
+    jsdata = dados # unecessary variable but better for clarity
+    jsdata['prioridade'] = processobj['prioridade'].strftime("%d/%m/%Y %H:%M:%S") # better date/view format    
     if table_pd is not None:      
-        # those are payload data dont mistake it with the real dados dict saved on database
-        # ONLY: 'states' and 'table' pandas dict are saved on database dados dict      
-        table, headers, attrs, attrs_names, states = htmlTableList(table_pd)                    
-        data['iestudo']['table'] = table                                    
-        data['iestudo']['headers'] = headers            
-        data['iestudo']['attrs'] = attrs
-        data['iestudo']['attrs_names'] = attrs_names
-        # states 'checkboxes''eventview'will be saved on DB when onClick or onChange
-        if 'states' in data['iestudo']: 
-            # ['groupindexes'] is not saved on DB but we need it to plot
-            data['iestudo']['states'].update({'groupindexes' : states['groupindexes']})
-            if not 'checkboxes' in data['iestudo']['states']:
-                data['iestudo']['states'].update({'checkboxes' : states['checkboxes']})
-            if not 'eventview' in data['iestudo']['states']:
-                data['iestudo']['states'].update({'eventview' : states['eventview']})
+        # those are payload data dont mistake it with the real dados dict saved on database        
+        table, headers, attrs, attrs_names, states = jsTableData(table_pd)    
+        #jsdata['iestudo'] = {'states' : {}}                
+        jsdata['iestudo']['table'] = table                                    
+        jsdata['iestudo']['headers'] = headers            
+        jsdata['iestudo']['attrs'] = attrs
+        jsdata['iestudo']['attrs_names'] = attrs_names
+        # states 'checkboxes'/'eventview' will be saved/updated on DB when onClick or onChange
+        if 'states' in dados['iestudo']:
+            # use database states if present except for groupindexes not on database
+            # dados['iestudo']['states'] will be present above read  # table/states read here
+            if not 'checkboxes' in dados['iestudo']['states']:
+                jsdata['iestudo']['states'].update({'checkboxes' : states['checkboxes']})
+            if not 'eventview' in dados['iestudo']['states']:
+                jsdata['iestudo']['states'].update({'eventview' : states['eventview']})
         else:
-            data['iestudo']['states'] = states
-    return data 
+            jsdata['iestudo']['states'] = states              
+        # ONLY: 'states' and table_pd (pandas dict) are saved on database dados['iestudo'] dict      
+        # ['groupindexes'] is not saved on DB but we need it to plot
+        dbdata['iestudo']['states'] = copy.deepcopy(jsdata['iestudo']['states']) # add without it        
+        jsdata['iestudo']['states'].update({'groupindexes' : states['groupindexes']})        
+    else: # table_pd is not present is None
+        # add status of finished/not-finished priority check on table
+        dbdata['iestudo'].update({'done' : False, 'time' : datetime.datetime.now() })         
+        jsdata['iestudo'].update(copy.deepcopy(dbdata['iestudo']))
+    # deepcopy is avoiding dbdata linked to jsdata dict, so 'table' key gets overwritten bellow
+    # database saves table as dataframe ->dict != from prettyfied pandas jsdata json-list   
+    dbdata['iestudo']['table'] = table_pd.to_dict()
+    processobj._dados.update(dbdata)  # add or update ['iestudo'] fields key      
+    processobj.changed() # db saves/updates everything at once    
+    return jsdata 
 
 def setCurrentProcessFolders():        
     processos = {} 
@@ -177,14 +187,14 @@ def updatedb(name, data, what='eventview', save=False):
 @app.route('/flask/update_checkbox', methods=['POST'])
 def update_checkbox():
     payload = request.get_json() 
-    print('pkg checkboxes', payload['name'], payload['data'], file=sys.stderr);
+    # print('pkg checkboxes', payload['name'], payload['data'], file=sys.stderr);
     updatedb(payload['name'], payload['data'], 'checkboxes')    
     return Response(status=204)     
 
 @app.route('/flask/update_eventview', methods=['POST'])
 def update_collapse():
     payload = request.get_json()  
-    print('pkg eventview', payload['name'], payload['data'], file=sys.stderr);  
+    # print('pkg eventview', payload['name'], payload['data'], file=sys.stderr);  
     updatedb(payload['name'], payload['data'], 'eventview')     
     return Response(status=204)
 
@@ -193,6 +203,7 @@ from bs4 import BeautifulSoup as soup
 # like /scm?process=830.691/2023
 @app.route('/flask/scm', methods=['GET'], strict_slashes=False)
 def scm_page():
+    """return scm page stored only the piece with processo information"""
     name =  fmtPname(request.args.get('process'))
     print(f'process is {name}', file=sys.stderr)
     html_content = ProcessStorage[name]._pages['basic']['html']        
@@ -211,13 +222,14 @@ def get_prioridade():
     """return list (without dot on name) of interferentes with process if checked-market or not
     for use on css_js_inject tool"""
     key = request.args.get('process')    
-    print(f'process is {key}', file=sys.stderr)
+    print(f'js_inject process is {key}', file=sys.stderr)
     processo = ProcessStorage[fmtPname(key)] # since html comes without dot
     if ('iestudo' in processo._dados and 
         'states' in processo._dados['iestudo'] and 
         'checkboxes' in processo._dados['iestudo']['states']):        
         dict_ =  processo._dados['iestudo']['states']['checkboxes'] # json iestudo table 
         return { key.replace(".", "") : value for key, value in dict_.items() } # remove dot for javascript use
+    print(f'js_inject process is {key} did not find checkboxes states', file=sys.stderr)
     return {}
 
 
