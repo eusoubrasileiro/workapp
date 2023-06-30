@@ -102,14 +102,15 @@ def startTableAnalysis():
             estudo = Interferencia.from_excel(wf.ProcessPathStorage[name])        
             table_pd = prettyTabelaInterferenciaMaster(estudo.tabela_interf_master, view=False)
         except RuntimeError:
-            table_pd = None
+            table_pd = None    
     # make the payload for javascript    
     jsdata = dados # unecessary variable but better for clarity
     jsdata['prioridade'] = processobj['prioridade'].strftime("%d/%m/%Y %H:%M:%S") # better date/view format    
     if table_pd is not None:      
         # those are payload data dont mistake it with the real dados dict saved on database        
         table, headers, attrs, attrs_names, states = jsTableData(table_pd)    
-        #jsdata['iestudo'] = {'states' : {}}                
+        if 'iestudo' not in jsdata:
+            jsdata['iestudo'] = {}                
         jsdata['iestudo']['table'] = table                                    
         jsdata['iestudo']['headers'] = headers            
         jsdata['iestudo']['attrs'] = attrs
@@ -128,13 +129,13 @@ def startTableAnalysis():
         # ['groupindexes'] is not saved on DB but we need it to plot
         dbdata['iestudo']['states'] = copy.deepcopy(jsdata['iestudo']['states']) # add without it        
         jsdata['iestudo']['states'].update({'groupindexes' : states['groupindexes']})        
-    else: # table_pd is not present is None
+        # deepcopy is avoiding dbdata linked to jsdata dict, so 'table' key gets overwritten bellow
+        # database saves table as dataframe ->dict != from prettyfied pandas jsdata json-list   
+        dbdata['iestudo']['table'] = table_pd.to_dict()
+    else: # table_pd is None
         # add status of finished/not-finished priority check on table
         dbdata['iestudo'].update({'done' : False, 'time' : datetime.datetime.now() })         
         jsdata['iestudo'].update(copy.deepcopy(dbdata['iestudo']))
-    # deepcopy is avoiding dbdata linked to jsdata dict, so 'table' key gets overwritten bellow
-    # database saves table as dataframe ->dict != from prettyfied pandas jsdata json-list   
-    dbdata['iestudo']['table'] = table_pd.to_dict()
     processobj._dados.update(dbdata)  # add or update ['iestudo'] fields key      
     processobj.changed() # db saves/updates everything at once    
     return jsdata 
@@ -266,7 +267,6 @@ def iestudo_finish():
 cache.set('dbloaded', 0)
 cache.set('timespent', 99999.99e6)
 cache.set('processos_dict', {})
-setCurrentProcessFolders()
 
 # Serving 'production' React App from here flask
 @app.route('/')
