@@ -45,7 +45,7 @@ CORS(app) # This will enable CORS for all routes
 app.config['CACHE_DEFAULT_TIMEOUT'] = 31536000 # 1 year of cache
 # Flask-Cache package
 app.config['CACHE_THRESHOLD'] = 10000
-app.config['CACHE_DIR'] = pathlib.Path("~/.workapp/cache") #  temporary directory that don't gets erased timely
+app.config['CACHE_DIR'] = pathlib.Path.home() / pathlib.Path(".workapp/cache") #  temporary directory that don't gets erased timely
 app.config['CACHE_TYPE'] = 'FileSystemCache' 
 cache = Cache(app)
 
@@ -140,7 +140,7 @@ def startTableAnalysis():
     processobj.changed() # db saves/updates everything at once    
     return jsdata 
 
-def setCurrentProcessFolders():        
+def getCurrentProcessFolders():        
     processos = {} 
     for process in wf.currentProcessGet():
         processobj = ProcessStorage[process]
@@ -149,17 +149,18 @@ def setCurrentProcessFolders():
     cache.set('processos_dict', processos)
 
 
-@app.route('/flask/list', methods=['GET'])
-def getProcessos():                  
-    fast_refresh = request.headers.get('fast-refresh', 'false')  # use request header information identify it        
-    if fast_refresh == 'true': # frequent refresh by setInterval javascript 15 seconds
-        print("Making a fast-refresh", file=sys.stderr)                
-    else:         
-        print("Making a slow-refresh re-reading the entire database", file=sys.stderr)
+def backgroundUpdate(sleep=15):
+    """Thread running on background updating shared dictionary every sleep seconds"""
+    while True:
+        # print("backgroundUpdate: Re-reading the entire database", file=sys.stderr)
         dbloaded, timespent = ProcessStorageUpdate(False, background=False) # update processes from sqlite database    
         cache.set('dbloaded', dbloaded)
         cache.set('timespent', round(timespent,2))        
-    setCurrentProcessFolders()  # update processes folder from working folder
+        time.sleep(sleep)
+
+@app.route('/flask/list', methods=['GET'])
+def getProcessos():                  
+    getCurrentProcessFolders()  # update processes folder from working folder
     return { 
             'processos' : cache.get('processos_dict'),
             'status'    : { 
@@ -283,6 +284,8 @@ if __name__ == '__main__':
     if args.dev:
         # do something nice on development when running from nodejs frontend
         pass 
+    # frequently re-read database
+    threading.Thread(target=backgroundUpdate).start()
     app.run(host='0.0.0.0', debug=args.dev, port=5000)   
     
 

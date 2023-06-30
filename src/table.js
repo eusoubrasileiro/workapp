@@ -30,11 +30,6 @@ function Cell({key_, value, onClick, tooltip}){ // undefined is the default if n
 }
 
 
-// TODO href on scm process on table
-// $("tr[evindex='0']:not([evn='1']) td:nth-child(3)").wrap(function() {        
-//   return "<a href='/process?process="+$(this).text()+"'/></a>";
-// });
-
 function IeTable({studyname, iestudo}){
   // arrays of same size for checkboxes and showevents states  
   const [ table, setTable] = useState({});
