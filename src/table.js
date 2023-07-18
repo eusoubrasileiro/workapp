@@ -126,71 +126,72 @@ function IeTable({studyname, iestudo}){
     let headindexes = Object.values(table.groupindexes).map((element) => {
       return Number(element[0]);
     });
+
+    let row_hide_idx = []
+    // remove event lines from table for creating <tr> rows
+    Object.entries(eventview).forEach( ([name, state]) => {
+      if(!state){ // if state is False remove event lines from that name process from table
+          let [start, end] = table.groupindexes[name]; // groupindexes stores range of rows a list [start, end] as string not numbers (came from flask backend)
+          for(let i=Number(start)+1; i<Number(end); i++) // remove all rows in ]start, end[
+            row_hide_idx.push(i);
+      }
+    });     
     
     // console.info('headindexes', headindexes);
-    for(let i=0; i<rcells.length; i++) 
+    for(let i=0; i<rcells.length; i++){
+      // generate a unique key for each child
+      const row_key = i;
       for(let j=0; j<rcells[0].length; j++){                         
         let name = table.cells[i][2];          
+        const td_key = i*rcells[0].length+j;
         switch(j){
           case 2:            
-              rcells[i][j] = <Cell key_={`k${(i)}x${j}`} 
+              rcells[i][j] = <Cell key_={td_key} 
                 value={ <Link className="SCM_link" to={`/scm_page/${ name.replace('/', '-') }`} > {name} </Link> }/>; 
             break;
           case 0: // 'Prior' checkbox - use 3rd column index 2 to get Process name [key]          
             if(headindexes.includes(i))
-              rcells[i][j] = <Cell key_={`k${(i)}x${j}`} value={<TinyCheckBox state={checkboxes[name]}
+              rcells[i][j] = <Cell key_={td_key} value={<TinyCheckBox state={checkboxes[name]}
                 onChange={() => onChangeCheckbox(name)}/>}/>;
             else 
-              rcells[i][j] = <Cell key_={`k${(i)}x${j}`} value={rcells[i][j]}/>;      
+              rcells[i][j] = <Cell key_={td_key} value={table.cells[i][j]}/>;      
             break;
           case 5: // 'Descrição' [5] - add event view change handler
             if(headindexes.includes(i))
-            rcells[i][j] = <Cell key_={`k${(i)}x${j}`} value={table.cells[i][j]}  
+            rcells[i][j] = <Cell key_={td_key} value={table.cells[i][j]}  
               onClick={() => onChangeShowEvents(name)}/>; 
             else
-              rcells[i][j] = <Cell key_={`k${(i)}x${j}`} value={rcells[i][j]}/>;      
+              rcells[i][j] = <Cell key_={td_key} value={table.cells[i][j]}/>;      
             break;            
           case 9: // Observação e DOU
           case 10:
-              rcells[i][j] = <Cell key_={`k${(i)}x${j}`} value={table.cells[i][j]}                
+              rcells[i][j] = <Cell key_={td_key} value={table.cells[i][j]}                
               tooltip={true}
               />; 
             break;
           default:
-            rcells[i][j] = <Cell key_={`k${(i)}x${j}`} value={rcells[i][j]}/>;                  
+            rcells[i][j] = <Cell key_={td_key} value={table.cells[i][j]}/>;                  
         }          
-      }    
-      
-    let row_hide = []
-    // remove event lines from rcells on creating <tr> rows
-    Object.entries(eventview).forEach( ([name, state]) => {
-      if(!state){ // if state is False remove event lines from that name process from table
-          let [start, end] = table.groupindexes[name];
-          for(let i=Number(start)+1; i<Number(end); i++) // remove all rows in ]start, end[
-            row_hide.push(i);
       }
-    });        
-
-    let row_indexes =  Array.from(Array(attributes.length).keys()).filter((item) => !row_hide.includes(item));    
-    // console.info('row_indexes after', row_indexes);
-    row_indexes.forEach((i) => 
-      rows.push(<tr key={uuidv4(rcells[i])} {...attributes[i]} >{rcells[i]}</tr>)      
-    );
+      if(!row_hide_idx.includes(i))
+        rows.push(<tr key={row_key} {...attributes[i]} >{rcells[i]}</tr>);
+    }    
    
     return rows;
   }
 
   if (table && table.header && table.cells && studyname)   
-    return (<table id='iestudo'>   
+    return (<><table id='iestudo'>   
               <thead>
                 {<tr>{table.header.map((value) => <th key={value}>{value}</th> )}</tr>}
               </thead>    
               <tbody>
               {renderTableRows()}
-              <Tooltip id="text-hidden-cell" 
-              className="tooltipstyle" />
               </tbody>
-            </table>);
+            </table>
+            <Tooltip id="text-hidden-cell" 
+              className="tooltipstyle" />
+            </>);
   else
     return <div>Loading...</div>;
 }
