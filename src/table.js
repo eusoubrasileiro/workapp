@@ -99,11 +99,21 @@ function IeTable({studyname, iestudo}){
     // since order matters for styling rows -> convert nested list in dictionary
     // since javascript dictionary will now preserve order here
     var groupindexes_dict = Object.fromEntries(iestudo.states.groupindexes);        
+    // add c0 or c1 class to group of process rows
+    Object.entries(groupindexes_dict).forEach(([name, indexes], index) =>{       
+      let [start, end] = indexes.map(item => Number(item));       
+      for(let i=start; i<end; i++)
+          attributes[i] = Object.assign(attributes[i], {className : `c${index%2}`});
+    });
+    var headindexes = Object.values(groupindexes_dict).map((element) => {
+      return Number(element[0]);
+    });
 
     setTable({
         'header' : iestudo.headers, 
         'attributes' : attributes,
         'cells' : iestudo.table,
+        'headindexes' : headindexes,
         'groupindexes' : groupindexes_dict, // only rendering information        
       });
 
@@ -112,20 +122,8 @@ function IeTable({studyname, iestudo}){
   // this should only plot
   // dont mess with state variables only slice/clone them before using  
   function renderTableRows(){        
-    const attributes = table.attributes.slice();
     var rcells = table.cells.map( (arr) => arr.slice() ); 
     var rows = [];          
-
-    // add c0 or c1 class to group of process rows
-    Object.entries(table.groupindexes).forEach(([name, indexes], index) =>{       
-      let [start, end] = indexes.map(item => Number(item));       
-      for(let i=start; i<end; i++)
-         attributes[i] = Object.assign(attributes[i], {className : `c${index%2}`});
-    });
-
-    let headindexes = Object.values(table.groupindexes).map((element) => {
-      return Number(element[0]);
-    });
 
     let row_hide_idx = []
     // remove event lines from table for creating <tr> rows
@@ -150,14 +148,14 @@ function IeTable({studyname, iestudo}){
                 value={ <Link className="SCM_link" to={`/scm_page/${ name.replace('/', '-') }`} > {name} </Link> }/>; 
             break;
           case 0: // 'Prior' checkbox - use 3rd column index 2 to get Process name [key]          
-            if(headindexes.includes(i))
+            if(table.headindexes.includes(i))
               rcells[i][j] = <Cell key_={td_key} value={<TinyCheckBox state={checkboxes[name]}
                 onChange={() => onChangeCheckbox(name)}/>}/>;
             else 
               rcells[i][j] = <Cell key_={td_key} value={table.cells[i][j]}/>;      
             break;
           case 5: // 'Descrição' [5] - add event view change handler
-            if(headindexes.includes(i))
+            if(table.headindexes.includes(i))
             rcells[i][j] = <Cell key_={td_key} value={table.cells[i][j]}  
               onClick={() => onChangeShowEvents(name)}/>; 
             else
@@ -174,7 +172,7 @@ function IeTable({studyname, iestudo}){
         }          
       }
       if(!row_hide_idx.includes(i))
-        rows.push(<tr key={row_key} {...attributes[i]} >{rcells[i]}</tr>);
+        rows.push(<tr key={row_key} {...table.attributes[i]} >{rcells[i]}</tr>);
     }    
    
     return rows;
