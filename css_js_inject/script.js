@@ -133,7 +133,6 @@ if(document.querySelector('body form').getAttribute('action') == 'Mapa.aspx?estu
 
     // force refresh of checkboxes navbar
     $checkboxes.change();
-    window.onbeforeunload = finished;
 
   });
 else{ // to show on sigareas page - to know it

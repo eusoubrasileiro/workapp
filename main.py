@@ -257,7 +257,7 @@ def iestudo_finish():
         except IndexError: # big pdf, slow download-processing by sigareas
             time.sleep(15) # wait a bit more
             move_pdf_n_finish()
-    threading.Thread(target=move_pdf).start()
+    threading.Thread(target=move_pdf_n_finish).start()
     return Response(status=204)
 
 cache.set('dbloaded', 0)
