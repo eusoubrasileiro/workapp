@@ -25,10 +25,7 @@ from flask import (
 
 from aidbag.anm.careas import config
 from aidbag.anm.careas import workflows as wf 
-from aidbag.anm.careas.scm import (
-    ProcessManager,
-    sync_with_database
-    )
+from aidbag.anm.careas.scm import ProcessManager
 from aidbag.anm.careas.scm.util import (
     fmtPname,
     numberyearPname
@@ -45,7 +42,8 @@ CORS(app) # This will enable CORS for all routes
 app.config['CACHE_DEFAULT_TIMEOUT'] = 31536000 # 1 year of cache
 # Flask-Cache package
 app.config['CACHE_THRESHOLD'] = 10000
-app.config['CACHE_DIR'] = pathlib.Path.home() / pathlib.Path(".workapp/cache") #  temporary directory that don't gets erased timely
+# cache directory - making a temporary directory that don't gets erased timely
+app.config['CACHE_DIR'] = pathlib.Path.home() / pathlib.Path(".workapp/cache") 
 app.config['CACHE_TYPE'] = 'FileSystemCache' 
 cache = Cache(app)
 
@@ -85,100 +83,76 @@ def jsTableData(table):
     states = {'checkboxes' : checkboxes, 'eventview' : eventview, 'groupindexes' : groupindexes}
     return table_pretty[row_cols].values.tolist(), row_cols, table[row_attrs].values.tolist(), row_attrs, states 
 
-@sync_with_database
 @app.route('/flask/analyze', methods=['POST'])
 def startTableAnalysis():
-    name = request.get_json()['name'] 
-    # getting from dictionary - but with a new session  
-    processobj = ProcessManager[name] 
-    dados = processobj.dados # table/states read here - returns a deep.copy   
+    name = request.get_json()['name']     
+    dbdata = ProcessManager.getDados(name)
     table_pd = None # pandas table
-    dbdata = {'iestudo' : {} } # to update-add process|database table/states 'iestudo' info
-    if 'iestudo' in dados and 'table' in dados['iestudo']: # from database
-        dbdata['iestudo'] = copy.deepcopy(dados['iestudo']) # already present
-        table_pd = pd.DataFrame.from_dict(dados['iestudo']['table'])        
+    # to update-add process|database start by default not done now
+    if 'iestudo' not in dbdata:
+        dbdata['iestudo'] = {'done' : False, 'time' : datetime.datetime.now() }
+    if 'iestudo' in dbdata and 'table' in dbdata['iestudo']: # from database        
+        table_pd = pd.DataFrame.from_dict(dbdata['iestudo']['table'])        
     else: # from legacy excel   
         try:
-            print(f"{dados['NUP']} Not using database json! Loading from legacy excel table.", file=sys.stderr)
+            print(f"{dbdata['NUP']} Not using database json! Loading from legacy excel table.", file=sys.stderr)
             estudo = Interferencia.from_excel(wf.ProcessPathStorage[name])        
             table_pd = prettyTabelaInterferenciaMaster(estudo.tabela_interf_master, view=False)
         except RuntimeError:
             table_pd = None    
-    # make the payload for javascript    
-    jsdata = dados # unecessary variable but better for clarity
-    jsdata['prioridade'] = dados['prioridade'].strftime("%d/%m/%Y %H:%M:%S") # better date/view format    
-    if 'iestudo' not in jsdata:
-        jsdata['iestudo'] = {}  
+    # make the payload data for javascript   
+    jsdata = copy.deepcopy(dbdata) 
+    jsdata['prioridade'] = dbdata['prioridade'].strftime("%d/%m/%Y %H:%M:%S") # better date/view format    
     if table_pd is not None:      
         # those are payload data dont mistake it with the real dados dict saved on database        
         table, headers, attrs, attrs_names, states = jsTableData(table_pd)                 
-        jsdata['iestudo']['table'] = table                                    
+        jsdata['iestudo']['table'] = table # pretty table styled <table><tr><td>                                   
         jsdata['iestudo']['headers'] = headers            
         jsdata['iestudo']['attrs'] = attrs
         jsdata['iestudo']['attrs_names'] = attrs_names
-        # states 'checkboxes'/'eventview' will be saved/updated on DB when onClick or onChange
-        if 'states' in dados['iestudo']:
-            # use database states if present except for groupindexes not on database
-            # dados['iestudo']['states'] will be present above read  # table/states read here
-            if not 'checkboxes' in dados['iestudo']['states']:
-                jsdata['iestudo']['states'].update({'checkboxes' : states['checkboxes']})
-            if not 'eventview' in dados['iestudo']['states']:
-                jsdata['iestudo']['states'].update({'eventview' : states['eventview']})
-        else:
-            jsdata['iestudo']['states'] = states              
-        # ONLY: 'states' and table_pd (pandas dict) are saved on database dados['iestudo'] dict      
-        # ['groupindexes'] is not saved on DB but we need it to plot
-        dbdata['iestudo']['states'] = copy.deepcopy(jsdata['iestudo']['states']) # add without it        
-        jsdata['iestudo']['states'].update({'groupindexes' : states['groupindexes']})        
-        # deepcopy is avoiding dbdata linked to jsdata dict, so 'table' key gets overwritten bellow
-        # database saves table as dataframe ->dict != from prettyfied pandas jsdata json-list   
-        dbdata['iestudo']['table'] = table_pd.to_dict()
-    else: # table_pd is None
-        # add status of finished/not-finished priority check on table
-        dbdata['iestudo'].update({'done' : False, 'time' : datetime.datetime.now() })         
-        jsdata['iestudo'].update(copy.deepcopy(dbdata['iestudo']))
-    processobj.db.dados.update(dbdata)  # add or update ['iestudo'] fields key              
+        # states will be saved/updated on DB when onClick or onChange
+        if not 'states' in dbdata['iestudo']:
+            jsdata['iestudo']['states'] = states 
+            # ONLY: 'states' and table_pd (pandas dict) are saved/updated on database dados['iestudo'] dict   
+            # deepcopy is avoiding dbdata linked to jsdata dict - add without groupindexes       
+            dbdata['iestudo']['states'] = copy.deepcopy(states)  
+        # database saves table as dataframe ->dict != from prettyfied pandas jsdata json-list           
+        dbdata['iestudo']['table'] = table_pd.to_dict()            
+    # add or update ['iestudo'] fields key
+    ProcessManager.updateDados(name, 'iestudo', dbdata['iestudo'])      
     return jsdata 
 
-@sync_with_database
-def getCurrentProcessFolders():        
+def backgroundUpdate(sleep=5):
+    """Thread running on background updating cached dictionary every sleep seconds"""    
     processos = {} 
-    for process in wf.currentProcessGet():    
-        # objects are created - in this session - thread
-        # each request in a new thread (or two sometimes) 
-        # more details on ProcessManager about  - Flask WSGI request_context thread behaviour
-        processos.update({process : ProcessManager[process].dados})  
-    cache.set('processos_dict', processos)
-
+    while True:  
+        processos.clear()
+        for process in wf.currentProcessGet():    
+            processos.update({process : ProcessManager.getDados(process)})  
+        cache.set('processos_dict', processos)   
+        time.sleep(sleep)    
 
 @app.route('/flask/list', methods=['GET'])
-def getProcessos():                  
-    getCurrentProcessFolders()  # update processes folder from working folder
+def getProcessos():       
     return { 
             'processos' : cache.get('processos_dict'),
             'status'    : { 
-                'workfolder' : config['processos_path'],             
-                'dbloaded' : cache.get('dbloaded'), 
-                'timespent' : cache.get('timespent') 
+                'workfolder' : config['processos_path']
                 }
             }
 
-@sync_with_database
 def updatedb(name, data, what='eventview', save=False):    
-    """update cached estudo table and estudo file on database DADOS column"""    
-    process = ProcessManager[name]            
+    """update cached estudo table and estudo file on database DADOS column"""        
     iestudo = {}
-    dados = process.dados ## already a copy
+    dados = ProcessManager.getDados(name) # a copy
     if 'iestudo' in dados:
         iestudo = dados['iestudo'] 
-        if 'states' not in iestudo:
-            iestudo['states'] = {}
         if 'checkboxes' in what:            
             iestudo['states'].update({'checkboxes' : data })
         elif 'eventview' in what:
             iestudo['states'].update({'eventview' : data })    
-        # should use the process storage lock here...        
-        process.db.dados.update({'iestudo' : iestudo})  # add or update ['iestudo'] fields key       
+        # add or update ['iestudo'] fields key  
+        ProcessManager.updateDados(name, 'iestudo', iestudo)     
 
 @app.route('/flask/update_checkbox', methods=['POST'])
 def update_checkbox():
@@ -197,7 +171,6 @@ def update_collapse():
 from bs4 import BeautifulSoup as soup 
 
 # like /scm?process=830.691/2023
-@sync_with_database
 @app.route('/flask/scm', methods=['GET'], strict_slashes=False)
 def scm_page():
     """return scm page stored only the piece with processo information"""
@@ -212,15 +185,14 @@ def scm_page():
 #
 # routines used by the `css_js_inject` chrome extension helper injection tool
 #
-@sync_with_database
+
 @app.route('/flask/get_prioridade', methods=['GET'])  # like /get_prioridade?process=830.691/2023
 def get_prioridade():
     """return list (without dot on name) of interferentes with process if checked-market or not
     for use on css_js_inject tool"""
     key = request.args.get('process')    
     print(f'js_inject process is {key}', file=sys.stderr)
-    processo = ProcessManager[key] 
-    dados = processo.dados 
+    dados = ProcessManager.getDados(key)
     if ('iestudo' in dados and 
         'states' in dados['iestudo'] and 
         'checkboxes' in dados['iestudo']['states']):        
@@ -229,7 +201,6 @@ def get_prioridade():
     print(f'js_inject process is {key} did not find checkboxes states', file=sys.stderr)
     return {}
 
-@sync_with_database
 @app.route('/flask/iestudo_finish', methods=['GET'])  
 def iestudo_finish():
     """
@@ -238,12 +209,13 @@ def iestudo_finish():
      * saves estudo pdf on Downloads folder as R_xxxxxx_xxx.pdf format
     """
     key = request.args.get('process')    
-    processo = ProcessManager[key] # since html comes without dot
-    finished = {'done': True, 'time' : datetime.datetime.now()}  
-    if 'iestudo' in processo:
-        processo.db.dados['iestudo'].update(finished)
+    dados = ProcessManager.getDados(key) # since html comes without dot
+    finished = {'done': True, 'time' : datetime.datetime.now()}
+    if 'iestudo' in dados:
+        dados['iestudo'].update(finished)  
     else:
-        processo.db.dados['iestudo'] = finished    
+        dados['iestudo'] = finished
+    ProcessManager.updateDados(key, 'iestudo', dados['iestudo'])  
     # wait some 15 seconds and copy the R pdf from download folder to correct folder....
     def move_pdf_n_finish():
         try:
@@ -279,6 +251,7 @@ if __name__ == '__main__':
     if args.dev:
         # do something nice on development when running from nodejs frontend
         pass 
+    threading.Thread(target=backgroundUpdate).start()
     app.run(host='0.0.0.0', debug=args.dev, port=5000)   
     
 
