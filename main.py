@@ -35,7 +35,9 @@ from aidbag.anm.careas.estudos.interferencia import (
         prettyTabelaInterferenciaMaster
     )
 
-app = Flask(__name__, static_folder='build')
+app = Flask(__name__, 
+    static_url_path='',
+    static_folder='./build')
 
 # to allow the anm domain (js,html injection) request this app on localhost
 CORS(app) # This will enable CORS for all routes
@@ -237,12 +239,15 @@ cache.set('timespent', 99999.99e6)
 cache.set('processos_dict', {})
 
 # Serving 'production' React App from here flask
+# it's already using the /build as static folder (above!)
+@app.errorhandler(404) # pages not found direct to react/index.html/javascript bundle
 @app.route('/')
-def index():
-    return send_from_directory('build', 'index.html')
+def index(e=None):
+    return app.send_static_file("index.html")
+
 @app.route('/<path:path>')
 def static_proxy(path):
-    return send_from_directory('build', path)
+    return app.send_static_file(path)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

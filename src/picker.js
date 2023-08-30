@@ -68,8 +68,6 @@ function PickProcess(){
       </ol>
       <footer>    
         <div>Working folder: {data.workfolder}</div>        
-        <div>Press F5 to reload from database</div>        
-        <div>Loaded {data.dbloaded} processes from database in {data.timespent} seconds. </div>
       </footer>
     </div> 
   )    
