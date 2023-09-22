@@ -199,7 +199,13 @@ def get_prioridade():
         'states' in dados['iestudo'] and 
         'checkboxes' in dados['iestudo']['states']):        
         dict_ =  dados['iestudo']['states']['checkboxes'] # json iestudo table 
-        return { key.replace(".", "") : value for key, value in dict_.items() } # remove dot for javascript use
+        # turn in acceptable javascript format for processes - otherwise wont work 
+        # 1. no dots 
+        # 2. no leading zeros 
+        def fmtPnameJs(name):
+            num, year = numberyearPname(name, int)        
+            return '/'.join([str(num),str(year)])        
+        return { fmtPnameJs(key) : value for key, value in dict_.items() } # remove dot for javascript use
     print(f'js_inject process is {key} did not find checkboxes states', file=sys.stderr)
     return {}
 
