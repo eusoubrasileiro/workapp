@@ -110,11 +110,11 @@ button.copyprocess:active {
 #iestudo tr td:nth-child(6) { 
   max-width: fit-content !important; 
 }
-/* OBS(7) DOU(8)
+/* OBS(9) DOU(10)
  set max-width with rem - 
 don't need to read at first glance */
-#iestudo tr td:nth-child(10), 
-#iestudo tr td:nth-child(11) {
+#iestudo tr td:nth-child(9), 
+#iestudo tr td:nth-child(10) {
   max-width: 15rem !important;
 } 
 

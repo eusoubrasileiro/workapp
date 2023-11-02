@@ -72,7 +72,7 @@ def jsTableData(table):
         table.rename(columns={'EvSeq' : '#'}, inplace=True)    
     row_attrs = ['Ativo', 'evindex', 'evn', 'Inativ'] # List of columns add as attributes in each row element.
     row_cols = table.columns.to_list() # List of columns to write as children in row element. By default, all columns
-    row_cols = [ v for v in row_cols if v not in ['evindex', 'evn'] ] # dont use these as columns 
+    row_cols = [ v for v in row_cols if v not in ['evindex', 'evn', 'Inativ'] ] # don't display these columns 
     table_pretty = prettyTabelaInterferenciaMaster(table, view=True)  # some prettify
     # States information using pretty table (checkboxes, eventview)
     query = table_pretty.query("Prior != ''")[['Processo', 'Prior']]

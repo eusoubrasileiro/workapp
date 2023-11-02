@@ -161,8 +161,8 @@ function IeTable({studyname, iestudo}){
             else
               rcells[i][j] = <Cell key_={td_key} value={table.cells[i][j]}/>;      
             break;            
-          case 9: // Observação e DOU
-          case 10:
+          case 8: // Observação e DOU
+          case 9:
               rcells[i][j] = <Cell key_={td_key} value={table.cells[i][j]}                
               tooltip={true}
               />; 
