@@ -95,6 +95,17 @@ button.copyprocess:active {
 #iestudo tbody tr[ativo='sim'] { /* mark dead processes */
   color: blue;      
 }
+
+/* eventos que ativam ou inativam um processo */
+#iestudo tbody tr[inativ='-1'] { /* mark inative events */
+  font-weight: bolder;
+  color: red;
+}
+#iestudo tbody tr[inativ='1'] { /* mark activate events */
+  font-weight: bolder;
+  color: black;
+}
+
 /* Descrição (6) must be readable completely */
 #iestudo tr td:nth-child(6) { 
   max-width: fit-content !important; 
