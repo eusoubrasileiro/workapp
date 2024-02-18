@@ -49,25 +49,25 @@ app.config['CACHE_DIR'] = pathlib.Path.home() / pathlib.Path(".workapp/cache")
 app.config['CACHE_TYPE'] = 'FileSystemCache' 
 cache = Cache(app)
 
-def jsTableData(table): 
-    """create data to be send as JSON to frontend to create <table><tr><th><td> etc. """
-    # additional columns created for stilying or UI/UX with css, jquery, jscript
+def uiTableData(table): 
+    """
+    From a pandas dataframe table create additional columns to be send as JSON.
+    So the frontend in React can create the table 'UI' (user interface) and the
+    interactiveness using javascript, html and css (styling) etc.
+    """
+    # additional columns created for stilying or UI with css, jquery, jscript
     if table is None: 
         return None 
     table = table.copy()
-    table['evindex'] = None 
-    table['evn'] = None   
+    table['evindex'] = None # index of event in row of events
+    table['evn'] = None   # number of rows of events
     for _, group in table.groupby(table.Processo):
         table.loc[group.index, 'evn'] = len(group) 
         table.loc[group.index, 'evindex'] = list(range(len(group)))        
     # for backward compatibility rearrange columns
     table = table[['Prior', 'Ativo', 'Processo', 'Evento', 'EvSeq', 'Descrição', 'Data', 
-            'DataPrior', 'EvPrior', 'Inativ', 'Obs', 'DOU', 'Dads', 'Sons',
+            'EvPrior', 'Inativ', 'Obs', 'DOU', 'Dads', 'Sons',
             'evindex', 'evn']]     
-    if 'DataPrior' in table.columns: # rename columns 
-        table.rename(columns={'DataPrior' : 'Protocolo'}, inplace=True)           
-    if 'Protocolo' in table.columns: # remove useless column
-        table.drop(columns=['Protocolo'], inplace=True)        
     if 'EvSeq' in table.columns:
         table.rename(columns={'EvSeq' : '#'}, inplace=True)    
     row_attrs = ['Ativo', 'evindex', 'evn', 'Inativ'] # List of columns add as attributes in each row element.
@@ -83,7 +83,14 @@ def jsTableData(table):
     # process group rows indexes start/end  - orders matters to jscript so must be list not dict 
     groupindexes = list(zip(query.Processo, groups+[[indexes[-1],str(table_pretty.shape[0])]]))
     states = {'checkboxes' : checkboxes, 'eventview' : eventview, 'groupindexes' : groupindexes}
-    return table_pretty[row_cols].values.tolist(), row_cols, table[row_attrs].values.tolist(), row_attrs, states 
+    dictTable = {
+        'table' : table_pretty[row_cols].values.tolist(), 
+        'headers' : row_cols,
+        'attrs' : table[row_attrs].values.tolist(), # columns of attributes for styling or interactivity
+        'attrs_names' : row_attrs, # column names of attributes above
+        'states': states # priority or not checked  processes
+    }
+    return dictTable
 
 @app.route('/flask/analyze', methods=['POST'])
 def startTableAnalysis():
@@ -106,20 +113,24 @@ def startTableAnalysis():
     jsdata = copy.deepcopy(dbdata) 
     jsdata['prioridade'] = dbdata['prioridade'].strftime("%d/%m/%Y %H:%M:%S") # better date/view format    
     if table_pd is not None:      
-        # those are payload data dont mistake it with the real dados dict saved on database        
-        table, headers, attrs, attrs_names, states = jsTableData(table_pd)                 
-        jsdata['iestudo']['table'] = table # pretty table styled <table><tr><td>                                   
-        jsdata['iestudo']['headers'] = headers            
-        jsdata['iestudo']['attrs'] = attrs
-        jsdata['iestudo']['attrs_names'] = attrs_names
+        # those are payload data dont mistake it with the real dados dict saved on database                
+        tabledata = uiTableData(table_pd)
+        # it's overwriting on jsdata['iestudo']['table'] that came from database
+        jsdata['iestudo']['table'] = tabledata['table'] # table data as list != from database as dict                             
+        jsdata['iestudo']['headers'] = tabledata['headers'] # columns for display           
+        jsdata['iestudo']['attrs'] = tabledata['attrs'] # columns for styling
+        jsdata['iestudo']['attrs_names'] = tabledata['attrs_names'] # names of columns for styling
         # states will be saved/updated on DB when onClick or onChange
         if not 'states' in dbdata['iestudo']:
-            jsdata['iestudo']['states'] = states 
+            jsdata['iestudo']['states'] = tabledata['states'] 
             # ONLY: 'states' and table_pd (pandas dict) are saved/updated on database dados['iestudo'] dict   
             # deepcopy is avoiding dbdata linked to jsdata dict - add without groupindexes       
-            dbdata['iestudo']['states'] = copy.deepcopy(states)  
+            dbdata['iestudo']['states'] = copy.deepcopy(tabledata['states'] )  
         # database saves table as dataframe ->dict != from prettyfied pandas jsdata json-list           
         dbdata['iestudo']['table'] = table_pd.to_dict()            
+    # react receives main table data as `dataframe.values.tolist()`
+    # but database data is 'dict' not 'list' so must be converted
+    
     # add or update ['iestudo'] fields key
     ProcessManager.updateDados(name, 'iestudo', dbdata['iestudo'])      
     return jsdata 
