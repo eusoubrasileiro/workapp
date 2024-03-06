@@ -35,11 +35,17 @@ from aidbag.anm.careas.estudos.interferencia import (
         prettyTabelaInterferenciaMaster
     )
 
-app = Flask(__name__, 
+
+if os.environ.get('APP_ENV') == 'production':
+    app = Flask(__name__, 
     static_url_path='',
     static_folder='./build')
+else:
+    app = Flask(__name__)
 
-# to allow the anm domain (js,html injection) request this app on localhost
+# need CORS on 2 cases
+# 1. to allow the anm domain (js,html injection) request this app on localhost
+# 2. development mode when frontend is run by nodejs
 CORS(app) # This will enable CORS for all routes
 app.config['CACHE_DEFAULT_TIMEOUT'] = 31536000 # 1 year of cache
 # Flask-Cache package
@@ -47,7 +53,32 @@ app.config['CACHE_THRESHOLD'] = 10000
 # cache directory - making a temporary directory that don't gets erased timely
 app.config['CACHE_DIR'] = pathlib.Path.home() / pathlib.Path(".workapp/cache") 
 app.config['CACHE_TYPE'] = 'FileSystemCache' 
+
 cache = Cache(app)
+cache.set('processos_dict', {})
+
+# routes for development or production
+
+if os.environ.get('APP_ENV') == 'production':
+    # Serving 'production' React App from here flask
+    # it's already using the /build as static folder (above!)
+    @app.errorhandler(404) # pages not found direct to react/index.html/javascript bundle
+    @app.route('/')
+    def index(e=None):
+        return app.send_static_file("index.html")
+
+    @app.route('/<path:path>')
+    def static_proxy(path):
+        return app.send_static_file(path)
+else:
+    @app.route('/')
+    def index():
+        return "In development mode!<br> RUN `npm start` from workapp project folder"
+
+def run():
+    threading.Thread(target=backgroundUpdate).start()
+    app.run(host='0.0.0.0', debug=(os.environ.get('APP_ENV') == 'development'), port=5000)   
+    
 
 def uiTableData(table): 
     """
@@ -194,6 +225,16 @@ def scm_page():
     res = sp.select('body form div table table:nth-child(3)')[0]    
     return str(res)
 
+# like /polygon?process=830.691/2023
+@app.route('/flask/polygon', methods=['GET'], strict_slashes=False)
+def poly_page():
+    """return scm polyogon page stored only the piece with processo information"""
+    name =  fmtPname(request.args.get('process'))
+    print(f'process is {name}', file=sys.stderr)
+    html_content = ProcessManager[name].polygon_html
+    sp = soup(html_content, "html.parser")
+    res = sp.select('body form div table table:nth-child(3)')[0]    
+    return str(res)
 
 #
 # routines used by the `css_js_inject` chrome extension helper injection tool
@@ -251,31 +292,6 @@ def iestudo_finish():
     threading.Thread(target=move_pdf_n_finish).start()
     return Response(status=204)
 
-cache.set('dbloaded', 0)
-cache.set('timespent', 99999.99e6)
-cache.set('processos_dict', {})
-
-# Serving 'production' React App from here flask
-# it's already using the /build as static folder (above!)
-@app.errorhandler(404) # pages not found direct to react/index.html/javascript bundle
-@app.route('/')
-def index(e=None):
-    return app.send_static_file("index.html")
-
-@app.route('/<path:path>')
-def static_proxy(path):
-    return app.send_static_file(path)
-
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-d','--dev', default=False, action='store_true')    
-    args = parser.parse_args()
-    if args.dev:
-        # do something nice on development when running from nodejs frontend
-        pass 
-    threading.Thread(target=backgroundUpdate).start()
-    app.run(host='0.0.0.0', debug=args.dev, port=5000)   
-    
 
 # To think about if saving the page table is enough
 # From html would work still?

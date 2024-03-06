@@ -26,6 +26,17 @@ div.flexcontainer
   padding: 4px;
 }
 
+.Poligonal
+{
+  font-weight: bold;
+  font-size: 14px;
+  color: #ffffff;
+  font-family: Tahoma;
+  background-color: #cac709;
+  padding: 4px;
+}
+
+
 /* NUP button */
 button.copyprocess {
   background: none!important;

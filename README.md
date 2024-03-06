@@ -4,11 +4,11 @@ Saves 'prioridade' results direct from browser to sqlite database. Uses `css_js_
 
 Run from `~/Projects` 
 
-```python -m workapp.main```
+```python -m workapp.run```
 
 or to run on background
 
-```nohup python -m workapp.main```
+```nohup python -m workapp.run```
 
 ### Frontend
 
@@ -20,9 +20,9 @@ That'll create the `build` folder (here) used by main.py
 
 ### Development
 
-You must run the backend and the frontend with nodejs:
+You must run the backend and then the frontend with nodejs:
 
-```python -m workapp.main```
+```python -m workapp.run -d```
 
 then 
 

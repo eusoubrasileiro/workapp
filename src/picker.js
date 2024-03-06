@@ -13,6 +13,7 @@ function ProcessRow({name, dados}) {
       <div><img src="https://sei.anm.gov.br/imagens/sei_logo_azul_celeste.jpg" width="25"></img></div>
       <div><button className="copyprocess" onClick={() => clipboardCopy(dados['NUP'])} > { dados['NUP'] }</button> </div>
       <Link className="SCM" to={`/scm_page/${ name.replace('/', '-') }`} > SCM </Link>       
+      <Link className="Poligonal" to={`/polygon_page/${ name.replace('/', '-') }`} > Poligonal </Link>      
       {dados['tipo']}
       {rowStatus(dados)}     
     </> 
