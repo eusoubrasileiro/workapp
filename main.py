@@ -131,8 +131,9 @@ def startTableAnalysis():
     # to update-add process|database start by default not done now
     if 'iestudo' not in dbdata:
         dbdata['iestudo'] = {'done' : False, 'time' : datetime.datetime.now() }
-    if 'iestudo' in dbdata and 'table' in dbdata['iestudo']: # from database        
-        table_pd = pd.DataFrame.from_dict(dbdata['iestudo']['table'])        
+    if 'iestudo' in dbdata:
+        if 'table' in dbdata['iestudo']: # from database        
+            table_pd = pd.DataFrame.from_dict(dbdata['iestudo']['table'])                
     else: # from legacy excel   
         try:
             print(f"{dbdata['NUP']} Not using database json! Loading from legacy excel table.", file=sys.stderr)
