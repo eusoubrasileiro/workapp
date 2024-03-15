@@ -63,7 +63,7 @@ function downloadDocument() {
 
   const anchorElement = document.createElement('a');
   anchorElement.href = downloadUrl;
-  anchorElement.download = `R_${number}_${year}.pdf`;  
+  anchorElement.download = `R@&_${number}_${year}.pdf`;  
   document.body.appendChild(anchorElement);
   anchorElement.click();
   document.body.removeChild(anchorElement);
