@@ -282,7 +282,8 @@ def iestudo_finish():
             time.sleep(15)
             number, year = numberyearPname(key)
             # search by the latest (1)(2) etc...        
-            source_pdfs = list(pathlib.Path(pathlib.Path.home() / "Downloads").glob(f"R_{number}_{year}*"))
+            prefix = f"{config['sigares']['doc_prefix']}_{number}_{year}"
+            source_pdfs = list(pathlib.Path(pathlib.Path.home() / "Downloads").glob(prefix+"*.pdf"))
             source_pdfs = sorted(source_pdfs, key=os.path.getctime, reverse=True) # sort by most recent 
             pdf_path = pathlib.Path(config['processos_path']) / f"{number}-{year}" / "R.pdf" 
             shutil.copy(source_pdfs[0], pdf_path) # get the most recent [0]
