@@ -259,7 +259,8 @@ def get_prioridade():
             num, year = numberyearPname(name, int)        
             return '/'.join([str(num),str(year)])        
         return { fmtPnameJs(key) : value for key, value in dict_.items() } # remove dot for javascript use
-    print(f'js_inject process is {key} did not find checkboxes states', file=sys.stderr)
+    # return this in case opção de área
+    print(f'js_inject process is {key} did not find checkboxes states. \n TODO implement Opção/Table checkbox', file=sys.stderr)
     return {}
 
 @app.route('/flask/iestudo_finish', methods=['GET'])  
@@ -283,11 +284,11 @@ def iestudo_finish():
             time.sleep(15)
             number, year = numberyearPname(key)
             # search by the latest (1)(2) etc...        
-            prefix = f"{config['sigares']['doc_prefix']}_{number}_{year}"
-            source_pdfs = list(pathlib.Path(pathlib.Path.home() / "Downloads").glob(prefix+"*.pdf"))
-            source_pdfs = sorted(source_pdfs, key=os.path.getctime, reverse=True) # sort by most recent 
-            pdf_path = pathlib.Path(config['processos_path']) / f"{number}-{year}" / "R.pdf" 
-            shutil.copy(source_pdfs[0], pdf_path) # get the most recent [0]
+            filename = f"{config['sigares']['doc_prefix']}_{number}_{year}"
+            source_pdfs = list(pathlib.Path(pathlib.Path.home() / "Downloads").glob(filename+"*.pdf"))
+            source_pdf = sorted(source_pdfs, key=os.path.getctime, reverse=True)[0] # sort by most recent
+            shutil.copy(source_pdfs.absolute(), # don't change original file name - that indicates opção/interferencia
+                pathlib.Path(config['processos_path']) / source_pdf.name) 
         except IndexError: # big pdf, slow download-processing by sigareas
             time.sleep(15) # wait a bit more
             move_pdf_n_finish()

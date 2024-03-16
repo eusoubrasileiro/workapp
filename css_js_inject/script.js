@@ -56,6 +56,12 @@ function highlight_set_checkboxes_prioridade(){
 }
 
 
+// to make sure we are at r. interferencia page not estudo=1 or estudo=8
+// also used for naming the downloaded file
+estudo_type = document.querySelector('body form').getAttribute('action');
+estudo_type = estudo_type.match(/\d{1,2}/)[0]; // get number
+estudo_type = (estudo_type == '8') ? 'opcao' : (estudo_type == '1') ? 'inter' : 'invalid';
+
 // download Relatorio to download folder
 function downloadDocument() {
   let [number, year] = mainprocess.split('/');
@@ -63,14 +69,13 @@ function downloadDocument() {
 
   const anchorElement = document.createElement('a');
   anchorElement.href = downloadUrl;
-  anchorElement.download = `R@&_${number}_${year}.pdf`;  
+  anchorElement.download = `R@&_${number}_${year}_{estudo_type}.pdf`;  
   document.body.appendChild(anchorElement);
   anchorElement.click();
   document.body.removeChild(anchorElement);
 }
 
-// to make sure we are at r. interferencia page not estudo=10,2,3,5 or any other 
-if(document.querySelector('body form').getAttribute('action') == 'Mapa.aspx?estudo=1')
+if(estudo_type == 'interf' || estudo_type == 'opcao') // r. interferencia ou opção
   $( document ).ready(function() {
 
     let process_name = getmainprocess();
