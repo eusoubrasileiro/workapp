@@ -287,7 +287,7 @@ def iestudo_finish():
             filename = f"{config['sigares']['doc_prefix']}_{number}_{year}"
             source_pdfs = list(pathlib.Path(pathlib.Path.home() / "Downloads").glob(filename+"*.pdf"))
             source_pdf = sorted(source_pdfs, key=os.path.getctime, reverse=True)[0] # sort by most recent
-            shutil.copy(source_pdfs.absolute(), # don't change original file name - that indicates opção/interferencia
+            shutil.copy(source_pdf.absolute(), # don't change original file name - that indicates opção/interferencia
                 pathlib.Path(config['processos_path']) / source_pdf.name) 
         except IndexError: # big pdf, slow download-processing by sigareas
             time.sleep(15) # wait a bit more

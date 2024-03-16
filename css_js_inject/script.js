@@ -60,7 +60,7 @@ function highlight_set_checkboxes_prioridade(){
 // also used for naming the downloaded file
 estudo_type = document.querySelector('body form').getAttribute('action');
 estudo_type = estudo_type.match(/\d{1,2}/)[0]; // get number
-estudo_type = (estudo_type == '8') ? 'opcao' : (estudo_type == '1') ? 'inter' : 'invalid';
+estudo_type = (estudo_type == '8') ? 'opcao' : (estudo_type == '1') ? 'interf' : 'invalid';
 
 // download Relatorio to download folder
 function downloadDocument() {
@@ -69,7 +69,7 @@ function downloadDocument() {
 
   const anchorElement = document.createElement('a');
   anchorElement.href = downloadUrl;
-  anchorElement.download = `R@&_${number}_${year}_{estudo_type}.pdf`;  
+  anchorElement.download = `R@&_${number}_${year}_${estudo_type}.pdf`;  
   document.body.appendChild(anchorElement);
   anchorElement.click();
   document.body.removeChild(anchorElement);
