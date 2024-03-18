@@ -61,19 +61,6 @@ function highlight_set_checkboxes_prioridade(){
 estudo_number = document.querySelector('body form').getAttribute('action');
 estudo_number = estudo_number.match(/\d{1,2}/)[0]; // get number
 
-// download Relatorio to download folder
-function downloadDocument() {
-  let [number, year] = mainprocess.split('/');
-  const downloadUrl = `http://sigareas.dnpm.gov.br/Paginas/Usuario/Imprimir.aspx?estudo=1&tipo=RELATORIO&numero=${number}&ano=${year}`;
-
-  const anchorElement = document.createElement('a');
-  anchorElement.href = downloadUrl;
-  anchorElement.download = `R@&_${number}_${year}_${estudo_number}.pdf`;  
-  document.body.appendChild(anchorElement);
-  anchorElement.click();
-  document.body.removeChild(anchorElement);
-}
-
 const estudos_validos = ['1', '8', '21']; // interf, opçao, m. regime com redução
 if(estudos_validos.includes(estudo_number)) 
   $( document ).ready(function() {
@@ -113,18 +100,19 @@ if(estudos_validos.includes(estudo_number))
             'Content-Type': 'application/json',
           },
           // Send cookie as data
-          body: JSON.stringify({ cookieData: cookie, process : mainprocess}),
-      })
-      .then(response => {
-        // Handle response
-        study_finished = true;
-      })
-      .catch(error => {
-        // Handle error
-      });
-        // make database know this estudo is finished
-        // Call the download function
-        downloadDocument();      
+          body: JSON.stringify({ 
+            cookieData: cookie, 
+            process : mainprocess,
+            estudo_number : estudo_number, 
+          }),
+        })
+        .then(response => {
+          // Handle response
+          study_finished = true;
+        })
+        .catch(error => {
+          alert(`Error on iestudo_finish request ${error}`);
+        });
       }
     }
 
@@ -157,7 +145,7 @@ if(estudos_validos.includes(estudo_number))
     $checkboxes.change();
 
   });
-else{ // to show on sigareas page - to know it
+else{ // to show on sigareas page - to know it's alive
   let interf_page_check = $('span#ctl00_cphConteudo_lblTitulo');
 
     const header_html = `
@@ -168,17 +156,16 @@ else{ // to show on sigareas page - to know it
     </div>
   `;
     document.querySelector("body").insertAdjacentHTML("beforeend", header_html);  
+  // Re-Download last study on 'R' press
+  // don't update study finished tough
+  $(document).keypress(function(e) {   
+    if(e.key == 'r') {
+      finished();
+    }
+  });
 }
 
-// Re-Download last study on 'R' press
-// don't update study finished tough
-$(document).keypress(function(e) {   
-  if(e.key == 'r') {
-    downloadDocument();
-  }
-  // TODO: warn backend to parse pdf and then
-  // move it to the proper place also updating finesh status
-});
+
 
 
 

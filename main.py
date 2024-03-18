@@ -23,7 +23,11 @@ from flask import (
         send_from_directory
     )
 
-from aidbag.anm.careas import config, processPath
+from aidbag.anm.careas import (
+    config, 
+    processPath, 
+    wPageNtlm
+    )
 from aidbag.anm.careas import workflows as wf 
 from aidbag.anm.careas.scm import ProcessManager
 from aidbag.anm.careas.scm.util import (
@@ -34,7 +38,6 @@ from aidbag.anm.careas.estudos.interferencia import (
         Interferencia, 
         prettyTabelaInterferenciaMaster
     )
-
 
 if os.environ.get('APP_ENV') == 'production':
     app = Flask(__name__, 
@@ -268,7 +271,8 @@ def iestudo_finish():
     """
     css_js_inject helper tool
      * reports estudo finished
-     * saves estudo pdf on Downloads folder as R_xxxxxx_xxx.pdf format
+     * download and saves estudo pdf on process folder
+       uses config doc prefix
     """
     key = request.json.get('process')
     dados = ProcessManager.getDados(key) # since html comes without dot
@@ -277,23 +281,20 @@ def iestudo_finish():
         dados['iestudo'].update(finished)  
     else:
         dados['iestudo'] = finished
-    ProcessManager.updateDados(key, 'iestudo', dados['iestudo'])  
+    print('json payloag', request.json, file=sys.stderr)
+    ProcessManager.updateDados(key, 'iestudo', dados['iestudo'])
+    number, year = numberyearPname(key)
+    anm_user, anm_passwd = config['anm_user'], config['anm_passwd']    
+    wp = wPageNtlm(anm_user, anm_passwd, ssl=True)    
+    url = f"http://sigareas.dnpm.gov.br/Paginas/Usuario/Imprimir.aspx?estudo=1&tipo=RELATORIO&numero={number}&ano={year}"    
+    cookie = request.json.get('cookieData')
+    enumber = request.json.get('estudo_number')
+    file = wp.get(url, cookies=cookie, verify=False)
+    path = (pathlib.Path(processPath(key)) / 
+        pathlib.Path(f"{config['sigares']['doc_prefix']}_{number}_{year}_{enumber}.pdf"))
+    with path.open('wb') as f: 
+        f.write(file.content)   
 
-    # wait some 15 seconds and copy the R pdf from download folder to correct folder....
-    def move_pdf_n_finish():
-        try:
-            time.sleep(15)
-            number, year = numberyearPname(key)
-            # search by the latest (1)(2) etc...        
-            filename = f"{config['sigares']['doc_prefix']}_{number}_{year}"
-            source_pdfs = list(pathlib.Path(pathlib.Path.home() / "Downloads").glob(filename+"*.pdf"))
-            source_pdf = sorted(source_pdfs, key=os.path.getctime, reverse=True)[0] # sort by most recent
-            shutil.copy(source_pdf.absolute(), # don't change original file name - that indicates opção/interferencia
-                pathlib.Path(pathlib.Path(processPath(key)) / source_pdf.name)) 
-        except IndexError: # big pdf, slow download-processing by sigareas
-            time.sleep(15) # wait a bit more
-            move_pdf_n_finish()
-    threading.Thread(target=move_pdf_n_finish).start()
     return Response(status=204)
 
 
