@@ -23,12 +23,12 @@ from flask import (
         send_from_directory
     )
 
-from aidbag.anm.careas import config
+from aidbag.anm.careas import config, processPath
 from aidbag.anm.careas import workflows as wf 
 from aidbag.anm.careas.scm import ProcessManager
 from aidbag.anm.careas.scm.util import (
     fmtPname,
-    numberyearPname
+    numberyearPname,    
     )
 from aidbag.anm.careas.estudos.interferencia import (
         Interferencia, 
@@ -263,14 +263,14 @@ def get_prioridade():
     print(f'js_inject process is {key} did not find checkboxes states. \n TODO implement Opção/Table checkbox', file=sys.stderr)
     return {}
 
-@app.route('/flask/iestudo_finish', methods=['GET'])  
+@app.route('/flask/iestudo_finish', methods=['POST'])  
 def iestudo_finish():
     """
     css_js_inject helper tool
      * reports estudo finished
      * saves estudo pdf on Downloads folder as R_xxxxxx_xxx.pdf format
     """
-    key = request.args.get('process')    
+    key = request.json.get('process')
     dados = ProcessManager.getDados(key) # since html comes without dot
     finished = {'done': True, 'time' : datetime.datetime.now()}
     if 'iestudo' in dados:
@@ -278,6 +278,7 @@ def iestudo_finish():
     else:
         dados['iestudo'] = finished
     ProcessManager.updateDados(key, 'iestudo', dados['iestudo'])  
+
     # wait some 15 seconds and copy the R pdf from download folder to correct folder....
     def move_pdf_n_finish():
         try:
@@ -288,7 +289,7 @@ def iestudo_finish():
             source_pdfs = list(pathlib.Path(pathlib.Path.home() / "Downloads").glob(filename+"*.pdf"))
             source_pdf = sorted(source_pdfs, key=os.path.getctime, reverse=True)[0] # sort by most recent
             shutil.copy(source_pdf.absolute(), # don't change original file name - that indicates opção/interferencia
-                pathlib.Path(config['processos_path']) / source_pdf.name) 
+                pathlib.Path(pathlib.Path(processPath(key)) / source_pdf.name)) 
         except IndexError: # big pdf, slow download-processing by sigareas
             time.sleep(15) # wait a bit more
             move_pdf_n_finish()

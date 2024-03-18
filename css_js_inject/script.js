@@ -58,9 +58,8 @@ function highlight_set_checkboxes_prioridade(){
 
 // to make sure we are at r. interferencia page not estudo=1 or estudo=8
 // also used for naming the downloaded file
-estudo_type = document.querySelector('body form').getAttribute('action');
-estudo_type = estudo_type.match(/\d{1,2}/)[0]; // get number
-estudo_type = (estudo_type == '8') ? 'opcao' : (estudo_type == '1') ? 'interf' : 'invalid';
+estudo_number = document.querySelector('body form').getAttribute('action');
+estudo_number = estudo_number.match(/\d{1,2}/)[0]; // get number
 
 // download Relatorio to download folder
 function downloadDocument() {
@@ -69,13 +68,14 @@ function downloadDocument() {
 
   const anchorElement = document.createElement('a');
   anchorElement.href = downloadUrl;
-  anchorElement.download = `R@&_${number}_${year}_${estudo_type}.pdf`;  
+  anchorElement.download = `R@&_${number}_${year}_${estudo_number}.pdf`;  
   document.body.appendChild(anchorElement);
   anchorElement.click();
   document.body.removeChild(anchorElement);
 }
 
-if(estudo_type == 'interf' || estudo_type == 'opcao') // r. interferencia ou opção
+const estudos_validos = ['1', '8', '21']; // interf, opçao, m. regime com redução
+if(estudos_validos.includes(estudo_number)) 
   $( document ).ready(function() {
 
     let process_name = getmainprocess();
@@ -100,31 +100,48 @@ if(estudo_type == 'interf' || estudo_type == 'opcao') // r. interferencia ou op�
 
     highlight_set_checkboxes_prioridade();
 
-  // adding callback to update on database when estudo is finished 9th and 10th tr on toolbar
-  document.onmousedown = function (event) {
-    if (!event) {event = window.event;}
-    // console.info("mousedown  target is "+ event.target + " target parent is " + event.target.parentElement + " parent attributes");
-    parent_id = event.target.parentElement.getAttribute("id")
-    console.log("parent id attribute " + parent_id);
-    if (!study_finished && 
-        ( parent_id == 'ctl00_cphConteudo_Toolbar1GerarRelatorio' ||
-          parent_id == 'ctl00_cphConteudo_Toolbar1FinalizarEstudo') 
-        ){
+    function finished(){      
+      // what a nonsense session Id cookie is inside the document text
+      var searchPattern = /sessionId = '([^']*)';/g;
+      // it's a vulnerability that might end in the future for sure
+      let id = searchPattern.exec(document.documentElement.textContent)[1];       
+      cookie = {'ASP.NET_SessionId' : id };
+      if(!study_finished){
+        fetch(`${backend_url}/iestudo_finish`, {
+          method: 'POST', 
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          // Send cookie as data
+          body: JSON.stringify({ cookieData: cookie, process : mainprocess}),
+      })
+      .then(response => {
+        // Handle response
+        study_finished = true;
+      })
+      .catch(error => {
+        // Handle error
+      });
         // make database know this estudo is finished
-        fetch(`${backend_url}/iestudo_finish?process=${mainprocess}`).then((response) =>{          
-          study_finished = true; 
-          downloadDocument();  
-        });
+        // Call the download function
+        downloadDocument();      
       }
-  };
-
-  function finished(){
-    if(!study_finished){
-      fetch(`${backend_url}/iestudo_finish?process=${mainprocess}`); // make database know this estudo is finished
-      // Call the download function
-      downloadDocument();      
     }
-  }
+
+    // adding callback to update on database when estudo is finished 9th and 10th tr on toolbar
+    document.onmousedown = function (event) {
+      if (!event) {event = window.event;}
+      // console.info("mousedown  target is "+ event.target + " target parent is " + event.target.parentElement + " parent attributes");
+      parent_id = event.target.parentElement.getAttribute("id")
+      console.log("parent id attribute " + parent_id);
+      if (!study_finished && 
+          ( parent_id == 'ctl00_cphConteudo_Toolbar1GerarRelatorio' ||
+            parent_id == 'ctl00_cphConteudo_Toolbar1FinalizarEstudo') 
+          ){          
+          // make database know this estudo is finished
+          finished();   
+        }
+    };
 
     // didn't load list of checkbox reload it on ENTER
     $(document).keypress(function(e) { 
