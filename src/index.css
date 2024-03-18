@@ -36,6 +36,11 @@ div.flexcontainer
   padding: 4px;
 }
 
+#checkboxes {
+  font-size: 16px;
+  border: none;      
+  font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;  
+}
 
 /* NUP button */
 button.copyprocess {

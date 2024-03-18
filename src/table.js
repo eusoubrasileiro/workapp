@@ -66,7 +66,7 @@ function IeTable({studyname, iestudo}){
   function onChangeCheckbox(name){ 
     console.info('onChangeCheckbox ' + name);
     let checkboxes_ = {...checkboxes}; // old state
-    checkboxes_[name] = !checkboxes_[name];    
+    checkboxes_[name] = !checkboxes_[name];        
     setCheckboxes(checkboxes_);
     saveCheckboxes(checkboxes_);
   } 
@@ -179,7 +179,9 @@ function IeTable({studyname, iestudo}){
   }
 
   if (table && table.header && table.cells && studyname)   
-    return (<><table id='iestudo'>   
+    return (<>
+              <div id="checkboxes">Prioritários {Object.values(checkboxes).filter(value => value === true).length}/{Object.keys(checkboxes).length}</div>
+              <table id='iestudo'>   
               <thead>
                 {<tr>{table.header.map((value) => <th key={value}>{value}</th> )}</tr>}
               </thead>    
@@ -242,7 +244,7 @@ function TableAnalysis() {
           </div> 
         <div>
           {rowStatus(process)}
-        </div>      
+        </div>              
       </div>        
       {analyze_table}
     </div>
