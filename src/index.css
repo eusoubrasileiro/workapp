@@ -105,21 +105,42 @@ button.copyprocess:active {
   border-radius: 10px;  
   border: 1px solid black;    
 } 
-#iestudo tbody tr[ativo='não'] { /* mark dead processes */
+
+#iestudo tr[ativo='não'] td:nth-child(2),
+#iestudo tr[ativo='não'] td:nth-child(4),
+#iestudo tr[ativo='não'] td:nth-child(5),
+#iestudo tr[ativo='não'] td:nth-child(6)
+{ /* mark dead processes */
   color: rgb(148, 13, 40);      
 }
+
 #iestudo tbody tr[ativo='sim'] { /* mark dead processes */
   color: blue;      
 }
 
 /* eventos que ativam ou inativam um processo */
-#iestudo tbody tr[inativ='-1'] { /* mark inative events */
+#iestudo tr[inativ='-1'] td:nth-child(4),
+#iestudo tr[inativ='-1'] td:nth-child(5),
+#iestudo tr[inativ='-1'] td:nth-child(6) 
+{ /* mark inative events */
   font-weight: bolder;
   color: red;
 }
-#iestudo tbody tr[inativ='1'] { /* mark activate events */
+
+#iestudo tr[inativ='1'] td:nth-child(4),
+#iestudo tr[inativ='1'] td:nth-child(5),
+#iestudo tr[inativ='1'] td:nth-child(6)
+{ /* mark activate events */
   font-weight: bolder;
-  color: black;
+  color: black;  
+}
+
+/* mark Dates that are older than prioridade */
+tr[evprior='0'] td:nth-child(7){
+  color : darkgreen;
+}
+tr[evprior='1'] td:nth-child(7){
+  color : darkorchid;
 }
 
 /* Descrição (6) must be readable completely */
@@ -129,8 +150,8 @@ button.copyprocess:active {
 /* OBS(9) DOU(10)
  set max-width with rem - 
 don't need to read at first glance */
-#iestudo tr td:nth-child(9), 
-#iestudo tr td:nth-child(10) {
+#iestudo tr td:nth-child(8), 
+#iestudo tr td:nth-child(9) {
   max-width: 15rem !important;
 } 
 
