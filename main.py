@@ -97,16 +97,19 @@ def uiTableData(table):
     table['evn'] = None   # number of rows of events
     for _, group in table.groupby(table.Processo):
         table.loc[group.index, 'evn'] = len(group) 
-        table.loc[group.index, 'evindex'] = list(range(len(group)))        
+        table.loc[group.index, 'evindex'] = list(range(len(group)))     
+
+    if 'Popc' not in table.columns:
+        table['Popc'] = False
     # for backward compatibility rearrange columns
     table = table[['Prior', 'Ativo', 'Processo', 'Evento', 'EvSeq', 'Descrição', 'Data', 
             'EvPrior', 'Inativ', 'Obs', 'DOU', 'Dads', 'Sons',
-            'evindex', 'evn']]     
+            'evindex', 'evn', 'Popc']]     
     if 'EvSeq' in table.columns:
         table.rename(columns={'EvSeq' : '#'}, inplace=True)    
-    row_attrs = ['Ativo', 'evindex', 'evn', 'Inativ', 'EvPrior'] # List of columns add as attributes in each row element.
+    row_attrs = ['Ativo', 'evindex', 'evn', 'Inativ', 'EvPrior', 'Popc'] # List of columns add as attributes in each row element.
     row_cols = table.columns.to_list() # List of columns to write as children in row element. By default, all columns
-    row_cols = [ v for v in row_cols if v not in ['evindex', 'evn', 'Inativ', 'EvPrior'] ] # don't display these columns 
+    row_cols = [ v for v in row_cols if v not in ['evindex', 'evn', 'Inativ', 'EvPrior', 'Popc'] ] # don't display these columns 
     table_pretty = prettyTabelaInterferenciaMaster(table, view=True)  # some prettify
     # States information using pretty table (checkboxes, eventview)
     query = table_pretty.query("Prior != ''")[['Processo', 'Prior']]

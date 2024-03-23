@@ -143,6 +143,12 @@ tr[evprior='1'] td:nth-child(7){
   color : darkorchid;
 }
 
+tr[popc='true'][evindex='0'] td:nth-child(3){
+  background-color: red;
+  font-weight: bold;
+  color: white;
+}
+
 /* Descrição (6) must be readable completely */
 #iestudo tr td:nth-child(6) { 
   max-width: fit-content !important; 
