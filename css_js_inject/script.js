@@ -7,24 +7,57 @@
 // </footer> 
 
 checked_dict = {}; // get dict of processes marked on database
-var mainprocess="xxxxxx/2022"; // default to RE-download on SIGAREAS page
-var study_finished=false;
-
+var study_finished = false;
 const backend_url = 'http://127.0.0.1:5000/flask'
+const sleep = 400; // sleep between clicks
+// navbar to count number of of checkboxes checked and unchecked
+const header_html = `
+  <div class="navbarcontainer">        
+    <div class="navbar">
+        <div class="h1">Workapp<div>
+        <div class="h1" id="workapp-process-name"> </div>
+        <div class="h2">checked 
+          <span id="count-checked-checkboxes">0</span>/
+          <span id="count-checkboxes">0</span> 
+        </div>        
+        <div class="h2"> <span id="workapp-finished-study"></span>
+        </div>
+    </div>
+  </div>
+`;
+var process_name = '';
+var mainpage = document.querySelector('#ctl00_cphConteudo_lblTitulo') == null;
+
+const estudos_validos = ['1', '8', '21']; // interf, opçao, m. regime com redução
+// to make sure we are at r. interferencia page not estudo=1 or estudo=8
+// also used for naming the downloaded file
+try{
+  estudo_number = document.querySelector('body form').getAttribute('action');
+  estudo_number = estudo_number.match(/\d{1,2}/)[0]; // get number
+}
+catch{
+  estudo_number = '$$$';  
+}
+console.log('Is this mainpage:', mainpage);
+console.log('Estudo number', estudo_number);
+
+document.querySelector("body").insertAdjacentHTML("afterbegin", header_html);
 
 function getmainprocess(){
     // Needs aidbag anm estudos work app running on localhost
-    return $("table#ctl00_cphConteudo_gvLowerLeft tbody tr td:first-child")[0].innerText;
+    try{
+      return $("table#ctl00_cphConteudo_gvLowerLeft tbody tr td:first-child")[0].innerText;
+    }catch{
+      return '';
+    }     
 }
-
-const sleep = 400; // sleep between clicks
 
 function highlight_set_checkboxes_prioridade(){
 
-  console.log(`Process in analysis is ${mainprocess}`)
-  mainprocess = getmainprocess();
-  document.title = 'SIG-Áreas['+mainprocess+']';
-  fetch(`${backend_url}/get_prioridade?process=${mainprocess}`)
+  console.log(`Process in analysis is ${process_name}`)
+  process_name = getmainprocess();
+  document.title = 'SIG-Áreas['+process_name+']';
+  fetch(`${backend_url}/get_prioridade?process=${process_name}`)
   .then(res => res.json()
   .then( data => { 
     checked_dict = data;
@@ -55,66 +88,69 @@ function highlight_set_checkboxes_prioridade(){
     });  
 }
 
+function finished(){      
+  // what a nonsense session Id cookie is inside the document text
+  var searchPattern = /sessionId = '([^']*)';/g;
+  // it's a vulnerability that might end in the future for sure
+  let id = searchPattern.exec(document.documentElement.textContent)[1];       
+  cookie = {'ASP.NET_SessionId' : id };
+  if(!study_finished){
+    fetch(`${backend_url}/iestudo_finish`, {
+      method: 'POST', 
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      // Send cookie as data
+      body: JSON.stringify({ 
+        cookieData: cookie, 
+        process : process_name,
+        estudo_number : estudo_number, 
+      }),
+    })
+    .then(response => {
+      // Handle response
+      study_finished = true;
+      $('#workapp-finished-study').text('Saved!');
+    })
+    .catch(error => {
+      alert(`Error on iestudo_finish request ${error}`);
+    });
+  }
+}
 
-// to make sure we are at r. interferencia page not estudo=1 or estudo=8
-// also used for naming the downloaded file
-estudo_number = document.querySelector('body form').getAttribute('action');
-estudo_number = estudo_number.match(/\d{1,2}/)[0]; // get number
 
-const estudos_validos = ['1', '8', '21']; // interf, opçao, m. regime com redução
-if(estudos_validos.includes(estudo_number)) 
+
+if(estudos_validos.includes(estudo_number) && !mainpage) 
   $( document ).ready(function() {
 
-    let process_name = getmainprocess();
-    // navbar to count number of of checkboxes checked and unchecked
-    const header_html = `
-      <div class="navbarcontainer">        
-        <div class="navbar">
-            <div class="h1">Workapp<div>
-            <div class="h1"> ${process_name} </div>
-            <div class="h2"> checked <span id="count-checked-checkboxes">0</span>/<span id="count-checkboxes">0</span> </div>        
-        </div>
-      </div>
-    `;
-    document.querySelector("body").insertAdjacentHTML("afterbegin", header_html);  
-    var $checkboxes = $("table#ctl00_cphConteudo_gvLowerRight tbody tr td input[type='checkbox']");
-    var total = $checkboxes.length;
-    $('#count-checkboxes').text(total);    
-    $checkboxes.change(function(){
-      let countCheckedCheckboxes = $checkboxes.filter(':checked').length;
-      $('#count-checked-checkboxes').text(countCheckedCheckboxes);
-    });
+    process_name = getmainprocess();
+    mainpage = (process_name == '')? true: false;    
 
-    highlight_set_checkboxes_prioridade();
+    if(!mainpage){
+      var $checkboxes = $("table#ctl00_cphConteudo_gvLowerRight tbody tr td input[type='checkbox']");
+      var total = $checkboxes.length;
+      $('#count-checkboxes').text(total);    
+      $('#workapp-process-name').text(process_name);    
+  
+      $checkboxes.change(function(){
+        let countCheckedCheckboxes = $checkboxes.filter(':checked').length;
+        $('#count-checked-checkboxes').text(countCheckedCheckboxes);
+      });
 
-    function finished(){      
-      // what a nonsense session Id cookie is inside the document text
-      var searchPattern = /sessionId = '([^']*)';/g;
-      // it's a vulnerability that might end in the future for sure
-      let id = searchPattern.exec(document.documentElement.textContent)[1];       
-      cookie = {'ASP.NET_SessionId' : id };
-      if(!study_finished){
-        fetch(`${backend_url}/iestudo_finish`, {
-          method: 'POST', 
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          // Send cookie as data
-          body: JSON.stringify({ 
-            cookieData: cookie, 
-            process : mainprocess,
-            estudo_number : estudo_number, 
-          }),
-        })
-        .then(response => {
-          // Handle response
-          study_finished = true;
-        })
-        .catch(error => {
-          alert(`Error on iestudo_finish request ${error}`);
-        });
-      }
+      highlight_set_checkboxes_prioridade();  
+      // force refresh of checkboxes navbar
+      $checkboxes.change();
     }
+
+    // didn't load list of checkbox reload it on ENTER
+    $(document).keypress(function(e) { 
+      if(e.key == 'Enter') {
+        highlight_set_checkboxes_prioridade();
+      }
+      if(e.key == 'r') {
+        finished();
+      }      
+    });
 
     // adding callback to update on database when estudo is finished 9th and 10th tr on toolbar
     document.onmousedown = function (event) {
@@ -130,40 +166,10 @@ if(estudos_validos.includes(estudo_number))
           finished();   
         }
     };
-
-    // didn't load list of checkbox reload it on ENTER
-    $(document).keypress(function(e) { 
-      if(e.key == 'Enter') {
-        highlight_set_checkboxes_prioridade();
-      }
-      if(e.key == 'r') {
-        finished();
-      }      
-    });
-
-    // force refresh of checkboxes navbar
-    $checkboxes.change();
+    
 
   });
-else{ // to show on sigareas page - to know it's alive
-  let interf_page_check = $('span#ctl00_cphConteudo_lblTitulo');
 
-    const header_html = `
-    <div class="navbarcontainer">
-      <div class="navbar">
-        <div class="h1">Workapp<div>         
-      </div>
-    </div>
-  `;
-    document.querySelector("body").insertAdjacentHTML("beforeend", header_html);  
-  // Re-Download last study on 'R' press
-  // don't update study finished tough
-  $(document).keypress(function(e) {   
-    if(e.key == 'r') {
-      finished();
-    }
-  });
-}
 
 
 

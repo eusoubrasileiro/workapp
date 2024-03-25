@@ -283,7 +283,6 @@ def iestudo_finish():
         dados['iestudo'].update(finished)  
     else:
         dados['iestudo'] = finished
-    print('json payloag', request.json, file=sys.stderr)
     ProcessManager.updateDados(key, 'iestudo', dados['iestudo'])
     number, year = numberyearPname(key)
     anm_user, anm_passwd = config['anm_user'], config['anm_passwd']    
@@ -296,7 +295,6 @@ def iestudo_finish():
         pathlib.Path(f"{config['sigares']['doc_prefix']}_{number}_{year}_{enumber}.pdf"))
     with path.open('wb') as f: 
         f.write(file.content)   
-
     return Response(status=204)
 
 
