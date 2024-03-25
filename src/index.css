@@ -106,15 +106,15 @@ button.copyprocess:active {
   border: 1px solid black;    
 } 
 
-#iestudo tr[ativo='não'] td:nth-child(2),
-#iestudo tr[ativo='não'] td:nth-child(4),
-#iestudo tr[ativo='não'] td:nth-child(5),
-#iestudo tr[ativo='não'] td:nth-child(6)
+#iestudo tr[ativo='false'] td:nth-child(2),
+#iestudo tr[ativo='false'] td:nth-child(4),
+#iestudo tr[ativo='false'] td:nth-child(5),
+#iestudo tr[ativo='false'] td:nth-child(6)
 { /* mark dead processes */
   color: rgb(148, 13, 40);      
 }
 
-#iestudo tbody tr[ativo='sim'] { /* mark dead processes */
+#iestudo tbody tr[ativo='true'] { /* mark dead processes */
   color: blue;      
 }
 

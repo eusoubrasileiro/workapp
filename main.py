@@ -36,7 +36,7 @@ from aidbag.anm.careas.scm.util import (
     )
 from aidbag.anm.careas.estudos.interferencia import (
         Interferencia, 
-        prettyTabelaInterferenciaMaster
+        prettyTableStr
     )
 
 if os.environ.get('APP_ENV') == 'production':
@@ -98,8 +98,7 @@ def uiTableData(table):
     for _, group in table.groupby(table.Processo):
         table.loc[group.index, 'evn'] = len(group) 
         table.loc[group.index, 'evindex'] = list(range(len(group)))     
-
-    if 'Popc' not in table.columns:
+    if 'Popc' not in table.columns: # backward compatibility when there was no 'Popc' column
         table['Popc'] = False
     # for backward compatibility rearrange columns
     table = table[['Prior', 'Ativo', 'Processo', 'Evento', 'EvSeq', 'Descrição', 'Data', 
@@ -110,7 +109,7 @@ def uiTableData(table):
     row_attrs = ['Ativo', 'evindex', 'evn', 'Inativ', 'EvPrior', 'Popc'] # List of columns add as attributes in each row element.
     row_cols = table.columns.to_list() # List of columns to write as children in row element. By default, all columns
     row_cols = [ v for v in row_cols if v not in ['evindex', 'evn', 'Inativ', 'EvPrior', 'Popc'] ] # don't display these columns 
-    table_pretty = prettyTabelaInterferenciaMaster(table, view=True)  # some prettify
+    table_pretty = prettyTableStr(table)  # some prettify
     # States information using pretty table (checkboxes, eventview)
     query = table_pretty.query("Prior != ''")[['Processo', 'Prior']]
     checkboxes = { tp.Processo: True if (tp.Prior=='1') else False  for (i,tp) in query.iterrows()}
@@ -144,7 +143,7 @@ def startTableAnalysis():
         try:
             print(f"{dbdata['NUP']} Not using database json! Loading from legacy excel table.", file=sys.stderr)
             estudo = Interferencia.from_excel(wf.ProcessPathStorage[name])        
-            table_pd = prettyTabelaInterferenciaMaster(estudo.tabela_interf_master, view=False)
+            table_pd = prettyTabelaExcel(estudo.tabela_interf_master, view=False)
         except RuntimeError:
             table_pd = None    
     # make the payload data for javascript   
@@ -301,12 +300,3 @@ def iestudo_finish():
     return Response(status=204)
 
 
-# To think about if saving the page table is enough
-# From html would work still?
-
-# from bs4 import BeautifulSoup as soup 
-# for name, obj in scm.ProcessStorage.items():
-#     sp = soup(obj._pages['basic']['html'], "html.parser")
-#     res = sp.select('body form div table table:nth-child(3)')[0]
-#     obj._pages['basic']['html'] = str(res) 
-#     obj.changed()

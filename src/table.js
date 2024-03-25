@@ -15,12 +15,12 @@ function TinyCheckBox({state, onChange}){
 
 
 
-function Cell({key_, value, onClick, tooltip}){ // undefined is the default if not set
-
+function Cell({key_, value, onClick, tooltip, tooltip_text}){ // undefined is the default if not set
+  tooltip_text = (tooltip_text)? tooltip_text: value;
   if(tooltip)  
    return (
     <td key={key_} onClick={onClick} 
-    data-tooltip-id="text-hidden-cell" data-tooltip-html={value} data-tooltip-variant="light">
+    data-tooltip-id="text-hidden-cell" data-tooltip-html={tooltip_text} data-tooltip-variant="light">
       {value}</td>
   );  
   return (
@@ -142,10 +142,17 @@ function IeTable({studyname, iestudo}){
       for(let j=0; j<rcells[0].length; j++){                         
         let name = table.cells[i][2];          
         const td_key = i*rcells[0].length+j;
-        switch(j){
-          case 2:            
-              rcells[i][j] = <Cell key_={td_key} 
+        switch(j){          
+          case 2: // Processo - tooltip or onhover show only if attribute['popc'] = 'true'
+              let tooltip_text = false;
+              if(table.attributes[i].popc === 'true') // do something to show it for this process a tooltip?           
+                tooltip_text = <bold>Multiplas Poligonais e Exigência.<br></br>Faça esta Opção Primeiro!</bold>;
+              rcells[i][j] = <Cell key_={td_key}  tooltip={tooltip_text?true:false}  tooltip_text={tooltip_text}
                 value={ <Link className="SCM_link" to={`/scm_page/${ name.replace('/', '-') }`} > {name} </Link> }/>; 
+            break;
+          case 1: // 'Ativo' turn true-false on sSim-Não
+            let text = (table.cells[i][j]=='True') ? '●' : (table.cells[i][j]=='False')? '✗' : '';
+            rcells[i][j] = <Cell key_={td_key} value={text}/>;     
             break;
           case 0: // 'Prior' checkbox - use 3rd column index 2 to get Process name [key]          
             if(table.headindexes.includes(i))
@@ -171,8 +178,10 @@ function IeTable({studyname, iestudo}){
             rcells[i][j] = <Cell key_={td_key} value={table.cells[i][j]}/>;                  
         }          
       }
-      if(!row_hide_idx.includes(i))
+      if(!row_hide_idx.includes(i)){        
         rows.push(<tr key={row_key} {...table.attributes[i]} >{rcells[i]}</tr>);
+      }
+      
     }    
    
     return rows;
