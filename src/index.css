@@ -13,27 +13,27 @@ div.flexcontainer
   align-content: center;
   flex-direction: row;
   align-items: center;
-  gap: 10px;
+  gap: 5px;
 }
 
 .SCM
 {
   font-weight: bold;
-  font-size: 14px;
-  color: #ffffff;
+  font-size: 15px;
+  color: #0b2adc;
   font-family: Tahoma;
-  background-color: #668DB1;
   padding: 4px;
+  text-decoration: none;
 }
 
 .Poligonal
 {
   font-weight: bold;
-  font-size: 14px;
-  color: #ffffff;
+  font-size: 20px;
+  color: #83d814;
   font-family: Tahoma;
-  background-color: #cac709;
   padding: 4px;
+  text-decoration: none;
 }
 
 #checkboxes {
@@ -75,12 +75,22 @@ button.copyprocess:active {
   gap: 10px;
   font-size: medium;   
   border: #3e8e41;
-  background: burlywood;
+  background: lavender;
   padding: 0.5%;
   text-decoration: none;
   border: 3px solid white;
   color: black;
 }
+
+#prioridade { 
+  font-weight: bold; 
+}
+
+#prioridade_data { 
+  font-weight: bold; 
+  color: red;
+}
+
 
 /* old styling sheets */
 
@@ -167,5 +177,4 @@ don't need to read at first glance */
 #iestudo tr.c1 { background-color: white;   }
 #iestudo tr:hover { background-color: rgb(180, 180, 180) !important; }
 
-#prioridade { font-weight: bold; }
-#prioridade_data { font-weight: bold; background-color: white; color: red;}
+

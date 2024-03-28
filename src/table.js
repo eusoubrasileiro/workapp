@@ -144,11 +144,18 @@ function IeTable({studyname, iestudo}){
         const td_key = i*rcells[0].length+j;
         switch(j){          
           case 2: // Processo - tooltip or onhover show only if attribute['popc'] = 'true'
+            if(table.headindexes.includes(i)){
               let tooltip_text = false;
               if(table.attributes[i].popc === 'true') // do something to show it for this process a tooltip?           
-                tooltip_text = <bold>Multiplas Poligonais e Exigência.<br></br>Faça esta Opção Primeiro!</bold>;
+                tooltip_text = "<bold>Multiplas Poligonais e Exigência.<br>Faça esta Opção Primeiro!</bold>";
               rcells[i][j] = <Cell key_={td_key}  tooltip={tooltip_text?true:false}  tooltip_text={tooltip_text}
-                value={ <Link className="SCM_link" to={`/scm_page/${ name.replace('/', '-') }`} > {name} </Link> }/>; 
+                value={<> 
+                  <Link className="SCM_link" to={`/scm_page/${ name.replace('/', '-') }`} > {name} </Link> 
+                  <Link className="Poligonal" to={`/polygon_page/${ name.replace('/', '-') }`} > ▱ </Link> </> 
+                }/>; 
+            }
+            else
+              rcells[i][j] = <Cell key_={td_key} value={table.cells[i][j]}/>;
             break;
           case 1: // 'Ativo' turn true-false on sSim-Não
             let text = (table.cells[i][j]=='True') ? '●' : (table.cells[i][j]=='False')? '✗' : '';
@@ -244,7 +251,8 @@ function TableAnalysis() {
     <div className="tablecontainer">
       <div className="navbarcontainer">
         <a id='prioridade'>Prioridade: <span id='prioridade_data'>{ process.prioridade }</span> </a> 
-        <Link className="SCM" to={`/scm_page/${ name.replace('/', '-') }`} > SCM </Link>  
+        <Link className="SCM" to={`/scm_page/${ name.replace('/', '-') }`} > 📁 </Link>  
+        <Link className="Poligonal" to={`/polygon_page/${ name.replace('/', '-') }`} > ▱ </Link>
         <button className="copyprocess" onClick={() => clipboardCopy(process.NUP)} > { process.NUP }</button>
           <div> 
             <a>1<sup>st</sup> parent: 

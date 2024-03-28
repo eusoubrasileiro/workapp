@@ -9,13 +9,13 @@ function ProcessRow({name, dados}) {
 
   return (
     <>
+      {rowStatus(dados)}   
       <Link to={`/table/${ name.replace('/', '-') }`} > {name} </Link> 
       <div><img src="https://sei.anm.gov.br/imagens/sei_logo_azul_celeste.jpg" width="25"></img></div>
       <div><button className="copyprocess" onClick={() => clipboardCopy(dados['NUP'])} > { dados['NUP'] }</button> </div>
-      <Link className="SCM" to={`/scm_page/${ name.replace('/', '-') }`} > SCM </Link>       
-      <Link className="Poligonal" to={`/polygon_page/${ name.replace('/', '-') }`} > Poligonal </Link>      
-      {dados['tipo']}
-      {rowStatus(dados)}     
+      <Link className="SCM" to={`/scm_page/${ name.replace('/', '-') }`} > 📁 </Link>       
+      <Link className="Poligonal" to={`/polygon_page/${ name.replace('/', '-') }`} > ▱ </Link>      
+      {dados['tipo']}        
     </> 
   )   
 }
