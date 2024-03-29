@@ -226,7 +226,7 @@ def scm_page():
     """return scm page stored only the piece with processo information"""
     name =  fmtPname(request.args.get('process'))
     print(f'process is {name}', file=sys.stderr)
-    html_content = ProcessManager[name].basic_html
+    html_content = ProcessManager.getAttr(name, 'basic_html') 
     sp = soup(html_content, "html.parser")
     res = sp.select('body form div table table:nth-child(3)')[0]    
     return str(res)
@@ -237,7 +237,7 @@ def poly_page():
     """return scm polyogon page stored only the piece with processo information"""
     name =  fmtPname(request.args.get('process'))
     print(f'process is {name}', file=sys.stderr)
-    html_content = ProcessManager[name].polygon_html
+    html_content = ProcessManager.getAttr(name, 'polygon_html') 
     sp = soup(html_content, "html.parser")
     res = sp.select('body form div table table:nth-child(3)')[0]    
     return str(res)
