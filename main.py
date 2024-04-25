@@ -13,6 +13,7 @@ import pandas as pd
 import argparse
 import datetime
 import copy
+from io import BytesIO
 
 from flask_cors import CORS
 from flask_caching import Cache
@@ -22,6 +23,8 @@ from flask import (
         Response,
         send_from_directory
     )
+
+from aidbag.general import pdf
 
 from aidbag.anm.careas import (
     config, 
@@ -277,13 +280,7 @@ def iestudo_finish():
        uses config doc prefix
     """
     key = request.json.get('process')
-    dados = ProcessManager.getDados(key) # since html comes without dot
-    finished = {'done': True, 'time' : datetime.datetime.now()}
-    if 'iestudo' in dados:
-        dados['iestudo'].update(finished)  
-    else:
-        dados['iestudo'] = finished
-    ProcessManager.updateDados(key, 'iestudo', dados['iestudo'])
+    dados = ProcessManager.getDados(key) 
     number, year = numberyearPname(key)
     anm_user, anm_passwd = config['anm_user'], config['anm_passwd']    
     wp = wPageNtlm(anm_user, anm_passwd, ssl=True)    
@@ -295,6 +292,14 @@ def iestudo_finish():
         pathlib.Path(f"{config['sigares']['doc_prefix']}_{number}_{year}_{enumber}.pdf"))
     with path.open('wb') as f: 
         f.write(file.content)   
+    bytes_stream = BytesIO(file.content)
+    extracted_text = pdf.readPdfText(bytes_stream) # also save pdf text extract as 'sigareas_pdf' key
+    finished = {'done': True, 'time' : datetime.datetime.now(), 'sigareas_pdf' : extracted_text}
+    if 'iestudo' in dados:
+        dados['iestudo'].update(finished)  
+    else:
+        dados['iestudo'] = finished
+    ProcessManager.updateDados(key, 'iestudo', dados['iestudo'])
     return Response(status=204)
 
 
