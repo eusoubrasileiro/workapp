@@ -137,11 +137,11 @@ def startTableAnalysis():
     dbdata = ProcessManager.getDados(name)
     table_pd = None # pandas table
     # to update-add process|database start by default not done now
-    if 'iestudo' not in dbdata:
-        dbdata['iestudo'] = {'done' : False, 'time' : datetime.datetime.now() }
-    if 'iestudo' in dbdata:
-        if 'table' in dbdata['iestudo']: # from database        
-            table_pd = pd.DataFrame.from_dict(dbdata['iestudo']['table'])                
+    if 'estudo' not in dbdata:
+        dbdata['estudo'] = {'done' : False, 'time' : datetime.datetime.now() }
+    if 'estudo' in dbdata:
+        if 'table' in dbdata['estudo']: # from database        
+            table_pd = pd.DataFrame.from_dict(dbdata['estudo']['table'])                
     else: # from legacy excel   
         try:
             print(f"{dbdata['NUP']} Not using database json! Loading from legacy excel table.", file=sys.stderr)
@@ -155,24 +155,24 @@ def startTableAnalysis():
     if table_pd is not None:      
         # those are payload data dont mistake it with the real dados dict saved on database                
         tabledata = uiTableData(table_pd)
-        # it's overwriting on jsdata['iestudo']['table'] that came from database
-        jsdata['iestudo']['table'] = tabledata['table'] # table data as list != from database as dict                             
-        jsdata['iestudo']['headers'] = tabledata['headers'] # columns for display           
-        jsdata['iestudo']['attrs'] = tabledata['attrs'] # columns for styling
-        jsdata['iestudo']['attrs_names'] = tabledata['attrs_names'] # names of columns for styling
+        # it's overwriting on jsdata['estudo]['table'] that came from database
+        jsdata['estudo']['table'] = tabledata['table'] # table data as list != from database as dict                             
+        jsdata['estudo']['headers'] = tabledata['headers'] # columns for display           
+        jsdata['estudo']['attrs'] = tabledata['attrs'] # columns for styling
+        jsdata['estudo']['attrs_names'] = tabledata['attrs_names'] # names of columns for styling
         # states will be saved/updated on DB when onClick or onChange
-        if not 'states' in dbdata['iestudo']:
-            jsdata['iestudo']['states'] = tabledata['states'] 
-            # ONLY: 'states' and table_pd (pandas dict) are saved/updated on database dados['iestudo'] dict   
+        if not 'states' in dbdata['estudo']:
+            jsdata['estudo']['states'] = tabledata['states'] 
+            # ONLY: 'states' and table_pd (pandas dict) are saved/updated on database dados['estudo] dict   
             # deepcopy is avoiding dbdata linked to jsdata dict - add without groupindexes       
-            dbdata['iestudo']['states'] = copy.deepcopy(tabledata['states'] )  
+            dbdata['estudo']['states'] = copy.deepcopy(tabledata['states'] )  
         # database saves table as dataframe ->dict != from prettyfied pandas jsdata json-list           
-        dbdata['iestudo']['table'] = table_pd.to_dict()            
+        dbdata['estudo']['table'] = table_pd.to_dict()            
     # react receives main table data as `dataframe.values.tolist()`
     # but database data is 'dict' not 'list' so must be converted
     
-    # add or update ['iestudo'] fields key
-    ProcessManager.updateDados(name, 'iestudo', dbdata['iestudo'])      
+    # add or update ['estudo] fields key
+    ProcessManager.updateDados(name, 'estudo', dbdata['estudo'])      
     return jsdata 
 
 def backgroundUpdate(sleep=5):
@@ -198,14 +198,14 @@ def updatedb(name, data, what='eventview', save=False):
     """update cached estudo table and estudo file on database DADOS column"""        
     iestudo = {}
     dados = ProcessManager.getDados(name) # a copy
-    if 'iestudo' in dados:
-        iestudo = dados['iestudo'] 
+    if 'estudo' in dados:
+        iestudo = dados['estudo'] 
         if 'checkboxes' in what:            
             iestudo['states'].update({'checkboxes' : data })
         elif 'eventview' in what:
             iestudo['states'].update({'eventview' : data })    
-        # add or update ['iestudo'] fields key  
-        ProcessManager.updateDados(name, 'iestudo', iestudo)     
+        # add or update ['estudo'] fields key  
+        ProcessManager.updateDados(name, 'estudo', iestudo)     
 
 @app.route('/flask/update_checkbox', methods=['POST'])
 def update_checkbox():
@@ -256,10 +256,10 @@ def get_prioridade():
     key = request.args.get('process')    
     print(f'js_inject process is {key}', file=sys.stderr)
     dados = ProcessManager.getDados(key)
-    if ('iestudo' in dados and 
-        'states' in dados['iestudo'] and 
-        'checkboxes' in dados['iestudo']['states']):        
-        dict_ =  dados['iestudo']['states']['checkboxes'] # json iestudo table 
+    if ('estudo' in dados and 
+        'states' in dados['estudo'] and 
+        'checkboxes' in dados['estudo']['states']):        
+        dict_ =  dados['estudo']['states']['checkboxes'] # json iestudo table 
         # turn in acceptable javascript format for processes - otherwise wont work 
         # 1. no dots 
         # 2. no leading zeros 
@@ -271,8 +271,8 @@ def get_prioridade():
     print(f'js_inject process is {key} did not find checkboxes states. \n TODO implement Opção/Table checkbox', file=sys.stderr)
     return {}
 
-@app.route('/flask/iestudo_finish', methods=['POST'])  
-def iestudo_finish():
+@app.route('/flask/estudo_finish', methods=['POST'])  
+def estudo_finish():
     """
     css_js_inject helper tool
      * reports estudo finished
@@ -294,12 +294,18 @@ def iestudo_finish():
         f.write(file.content)   
     bytes_stream = BytesIO(file.content)
     extracted_text = pdf.readPdfText(bytes_stream) # also save pdf text extract as 'sigareas_pdf' key
-    finished = {'done': True, 'time' : datetime.datetime.now(), 'sigareas_pdf' : extracted_text}
-    if 'iestudo' in dados:
-        dados['iestudo'].update(finished)  
+    finished = {'done': True, 
+                'time' : datetime.datetime.now(), 
+                'sigareas': {
+                    'pdf_text' : extracted_text, 
+                    'pdf_path' : str(path.absolute()) 
+                    } 
+                }
+    if 'estudo' in dados:
+        dados['estudo'].update(finished)  
     else:
-        dados['iestudo'] = finished
-    ProcessManager.updateDados(key, 'iestudo', dados['iestudo'])
+        dados['estudo'] = finished
+    ProcessManager.updateDados(key, 'estudo', dados['estudo'])
     return Response(status=204)
 
 
