@@ -196,16 +196,16 @@ def getProcessos():
 
 def updatedb(name, data, what='eventview', save=False):    
     """update cached estudo table and estudo file on database DADOS column"""        
-    iestudo = {}
+    estudo = {}
     dados = ProcessManager.getDados(name) # a copy
     if 'estudo' in dados:
-        iestudo = dados['estudo'] 
+        estudo = dados['estudo'] 
         if 'checkboxes' in what:            
-            iestudo['states'].update({'checkboxes' : data })
+            estudo['states'].update({'checkboxes' : data })
         elif 'eventview' in what:
-            iestudo['states'].update({'eventview' : data })    
+            estudo['states'].update({'eventview' : data })    
         # add or update ['estudo'] fields key  
-        ProcessManager.updateDados(name, 'estudo', iestudo)     
+        ProcessManager.updateDados(name, 'estudo', estudo)     
 
 @app.route('/flask/update_checkbox', methods=['POST'])
 def update_checkbox():
@@ -259,7 +259,7 @@ def get_prioridade():
     if ('estudo' in dados and 
         'states' in dados['estudo'] and 
         'checkboxes' in dados['estudo']['states']):        
-        dict_ =  dados['estudo']['states']['checkboxes'] # json iestudo table 
+        dict_ =  dados['estudo']['states']['checkboxes'] # json estudo table 
         # turn in acceptable javascript format for processes - otherwise wont work 
         # 1. no dots 
         # 2. no leading zeros 

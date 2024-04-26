@@ -30,7 +30,7 @@ function Cell({key_, value, onClick, tooltip, tooltip_text}){ // undefined is th
 }
 
 
-function IeTable({studyname, iestudo}){
+function IeTable({studyname, estudo}){
   // arrays of same size for checkboxes and showevents states  
   const [ table, setTable] = useState({});
   const [ checkboxes, setCheckboxes] = useState({});
@@ -81,9 +81,9 @@ function IeTable({studyname, iestudo}){
 
   // this should only create data and set state variables
   useEffect(() => {
-    const nrows = iestudo.table.length;  
-    const attrs = iestudo.attrs;
-    const attrs_names = iestudo.attrs_names;    
+    const nrows = estudo.table.length;  
+    const attrs = estudo.attrs;
+    const attrs_names = estudo.attrs_names;    
 
     var attributes = []; 
     for(let i = 0; i < nrows; i++){
@@ -93,12 +93,12 @@ function IeTable({studyname, iestudo}){
       attributes.push(row_dict);   
     }    
 
-    setCheckboxes(iestudo.states.checkboxes); // initial states
-    setEventview(iestudo.states.eventview); // initial states
+    setCheckboxes(estudo.states.checkboxes); // initial states
+    setEventview(estudo.states.eventview); // initial states
 
     // since order matters for styling rows -> convert nested list in dictionary
     // since javascript dictionary will now preserve order here
-    var groupindexes_dict = Object.fromEntries(iestudo.states.groupindexes);        
+    var groupindexes_dict = Object.fromEntries(estudo.states.groupindexes);        
     // add c0 or c1 class to group of process rows
     Object.entries(groupindexes_dict).forEach(([name, indexes], index) =>{       
       let [start, end] = indexes.map(item => Number(item));       
@@ -110,14 +110,14 @@ function IeTable({studyname, iestudo}){
     });
 
     setTable({
-        'header' : iestudo.headers, 
+        'header' : estudo.headers, 
         'attributes' : attributes,
-        'cells' : iestudo.table,
+        'cells' : estudo.table,
         'headindexes' : headindexes,
         'groupindexes' : groupindexes_dict, // only rendering information        
       });
 
-  },[iestudo]);
+  },[estudo]);
 
   // this should only plot
   // dont mess with state variables only slice/clone them before using  
@@ -197,7 +197,7 @@ function IeTable({studyname, iestudo}){
   if (table && table.header && table.cells && studyname)   
     return (<>
               <div id="checkboxes">Prioritários {Object.values(checkboxes).filter(value => value === true).length}/{Object.keys(checkboxes).length}</div>
-              <table id='iestudo'>   
+              <table id='estudo'>   
               <thead>
                 {<tr>{table.header.map((value) => <th key={value}>{value}</th> )}</tr>}
               </thead>    
@@ -243,13 +243,14 @@ function TableAnalysis() {
 
 
   let analyze_table = <h3>No table found!</h3>;
-  if (process.iestudo.hasOwnProperty('table'))
-    analyze_table = <IeTable studyname={fmtdname} iestudo={process.iestudo}/>
+  if (process.estudo.hasOwnProperty('table'))
+    analyze_table = <IeTable studyname={fmtdname} estudo={process.estudo}/>
 
   return (
     <>
     <div className="tablecontainer">
       <div className="navbarcontainer">
+        <a id='tipo'> { process.tipo }</a>
         <a id='prioridade'>Prioridade: <span id='prioridade_data'>{ process.prioridade }</span> </a> 
         <Link className="SCM" to={`/scm_page/${ name.replace('/', '-') }`} > 📁 </Link>  
         <Link className="Poligonal" to={`/polygon_page/${ name.replace('/', '-') }`} > ▱ </Link>

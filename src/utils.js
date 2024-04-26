@@ -1,7 +1,7 @@
 
 function rowStatus(dados) {
-    if (dados.hasOwnProperty('iestudo')) {
-        if (dados.iestudo.done)
+    if (dados.hasOwnProperty('estudo')) {
+        if (dados.estudo.done)
             return <a>&#9989;</a>
 
         else

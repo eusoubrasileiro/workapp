@@ -58,7 +58,7 @@ button.copyprocess:active {
 }
 
 
-/* table iestudo */
+/* table estudo */
 
 .tablecontainer {
   display: flex;
@@ -96,13 +96,13 @@ button.copyprocess:active {
 
 /* dont need attributes 'group', 'display' for styling */
 
-#iestudo th {
+#estudo th {
   font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
   font-size: 16px;
   border: none;      
 }
 
-#iestudo td { /* default settings */   
+#estudo td { /* default settings */   
   border: none;
   text-align: center;      
   overflow: hidden;
@@ -110,36 +110,36 @@ button.copyprocess:active {
   white-space: nowrap;    
 }
 
-#iestudo tr[evindex='0']:not([evn='1']) td:nth-child(6){ /* has events - mark bold */      
+#estudo tr[evindex='0']:not([evn='1']) td:nth-child(6){ /* has events - mark bold */      
   font-weight: bolder;  
   border-radius: 10px;  
   border: 1px solid black;    
 } 
 
-#iestudo tr[ativo='false'] td:nth-child(2),
-#iestudo tr[ativo='false'] td:nth-child(4),
-#iestudo tr[ativo='false'] td:nth-child(5),
-#iestudo tr[ativo='false'] td:nth-child(6)
+#estudo tr[ativo='false'] td:nth-child(2),
+#estudo tr[ativo='false'] td:nth-child(4),
+#estudo tr[ativo='false'] td:nth-child(5),
+#estudo tr[ativo='false'] td:nth-child(6)
 { /* mark dead processes */
   color: rgb(148, 13, 40);      
 }
 
-#iestudo tbody tr[ativo='true'] { /* mark dead processes */
+#estudo tbody tr[ativo='true'] { /* mark dead processes */
   color: blue;      
 }
 
 /* eventos que ativam ou inativam um processo */
-#iestudo tr[inativ='-1'] td:nth-child(4),
-#iestudo tr[inativ='-1'] td:nth-child(5),
-#iestudo tr[inativ='-1'] td:nth-child(6) 
+#estudo tr[inativ='-1'] td:nth-child(4),
+#estudo tr[inativ='-1'] td:nth-child(5),
+#estudo tr[inativ='-1'] td:nth-child(6) 
 { /* mark inative events */
   font-weight: bolder;
   color: red;
 }
 
-#iestudo tr[inativ='1'] td:nth-child(4),
-#iestudo tr[inativ='1'] td:nth-child(5),
-#iestudo tr[inativ='1'] td:nth-child(6)
+#estudo tr[inativ='1'] td:nth-child(4),
+#estudo tr[inativ='1'] td:nth-child(5),
+#estudo tr[inativ='1'] td:nth-child(6)
 { /* mark activate events */
   font-weight: bolder;
   color: black;  
@@ -160,21 +160,21 @@ tr[popc='true'][evindex='0'] td:nth-child(3){
 }
 
 /* Descrição (6) must be readable completely */
-#iestudo tr td:nth-child(6) { 
+#estudo tr td:nth-child(6) { 
   max-width: fit-content !important; 
 }
 /* OBS(9) DOU(10)
  set max-width with rem - 
 don't need to read at first glance */
-#iestudo tr td:nth-child(8), 
-#iestudo tr td:nth-child(9) {
+#estudo tr td:nth-child(8), 
+#estudo tr td:nth-child(9) {
   max-width: 15rem !important;
 } 
 
 .tooltipstyle { max-width: 20%; }
 
-#iestudo tr.c0 { background-color: lightgray;   }
-#iestudo tr.c1 { background-color: white;   }
-#iestudo tr:hover { background-color: rgb(180, 180, 180) !important; }
+#estudo tr.c0 { background-color: lightgray;   }
+#estudo tr.c1 { background-color: white;   }
+#estudo tr:hover { background-color: rgb(180, 180, 180) !important; }
 
 
