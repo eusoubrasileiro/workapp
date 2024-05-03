@@ -95,7 +95,7 @@ function finished(){
   let id = searchPattern.exec(document.documentElement.textContent)[1];       
   cookie = {'ASP.NET_SessionId' : id };
   if(!study_finished){
-    fetch(`${backend_url}/iestudo_finish`, {
+    fetch(`${backend_url}/estudo_finish`, {
       method: 'POST', 
       headers: {
         'Content-Type': 'application/json',
@@ -113,7 +113,7 @@ function finished(){
       $('#workapp-finished-study').text('Saved!');
     })
     .catch(error => {
-      alert(`Error on iestudo_finish request ${error}`);
+      alert(`Error on estudo_finish request ${error}`);
     });
   }
 }

@@ -134,7 +134,7 @@ def uiTableData(table):
 @app.route('/flask/analyze', methods=['POST'])
 def startTableAnalysis():
     name = request.get_json()['name']     
-    dbdata = ProcessManager.getDados(name)
+    dbdata = ProcessManager[name].dados
     table_pd = None # pandas table
     # to update-add process|database start by default not done now
     if 'estudo' not in dbdata:
@@ -172,7 +172,7 @@ def startTableAnalysis():
     # but database data is 'dict' not 'list' so must be converted
     
     # add or update ['estudo] fields key
-    ProcessManager.updateDados(name, 'estudo', dbdata['estudo'])      
+    ProcessManager[name].update('estudo', dbdata['estudo'])      
     return jsdata 
 
 def backgroundUpdate(sleep=5):
@@ -181,7 +181,7 @@ def backgroundUpdate(sleep=5):
     while True:  
         processos.clear()
         for process in wf.currentProcessGet():    
-            processos.update({process : ProcessManager.getDados(process)})  
+            processos.update({process : ProcessManager[process].dados})  
         cache.set('processos_dict', processos)   
         time.sleep(sleep)    
 
@@ -197,7 +197,7 @@ def getProcessos():
 def updatedb(name, data, what='eventview', save=False):    
     """update cached estudo table and estudo file on database DADOS column"""        
     estudo = {}
-    dados = ProcessManager.getDados(name) # a copy
+    dados = ProcessManager[name].dados # a copy
     if 'estudo' in dados:
         estudo = dados['estudo'] 
         if 'checkboxes' in what:            
@@ -205,7 +205,7 @@ def updatedb(name, data, what='eventview', save=False):
         elif 'eventview' in what:
             estudo['states'].update({'eventview' : data })    
         # add or update ['estudo'] fields key  
-        ProcessManager.updateDados(name, 'estudo', estudo)     
+        ProcessManager[name].update('estudo', estudo)     
 
 @app.route('/flask/update_checkbox', methods=['POST'])
 def update_checkbox():
@@ -227,9 +227,9 @@ from bs4 import BeautifulSoup as soup
 @app.route('/flask/scm', methods=['GET'], strict_slashes=False)
 def scm_page():
     """return scm page stored only the piece with processo information"""
-    name =  fmtPname(request.args.get('process'))
+    name =  request.args.get('process')
     print(f'process is {name}', file=sys.stderr)
-    html_content = ProcessManager.getAttr(name, 'basic_html') 
+    html_content = ProcessManager[name].basic_html
     sp = soup(html_content, "html.parser")
     res = sp.select('body form div table table:nth-child(3)')[0]    
     return str(res)
@@ -238,9 +238,9 @@ def scm_page():
 @app.route('/flask/polygon', methods=['GET'], strict_slashes=False)
 def poly_page():
     """return scm polyogon page stored only the piece with processo information"""
-    name =  fmtPname(request.args.get('process'))
+    name =  request.args.get('process')
     print(f'process is {name}', file=sys.stderr)
-    html_content = ProcessManager.getAttr(name, 'polygon_html') 
+    html_content = ProcessManager[name].polygon_html
     sp = soup(html_content, "html.parser")
     res = sp.select('body form div table table:nth-child(3)')[0]    
     return str(res)
@@ -255,7 +255,7 @@ def get_prioridade():
     for use on css_js_inject tool"""
     key = request.args.get('process')    
     print(f'js_inject process is {key}', file=sys.stderr)
-    dados = ProcessManager.getDados(key)
+    dados = ProcessManager[key].dados
     if ('estudo' in dados and 
         'states' in dados['estudo'] and 
         'checkboxes' in dados['estudo']['states']):        
@@ -280,7 +280,7 @@ def estudo_finish():
        uses config doc prefix
     """
     key = request.json.get('process')
-    dados = ProcessManager.getDados(key) 
+    dados = ProcessManager[key].dados
     number, year = numberyearPname(key)
     anm_user, anm_passwd = config['anm_user'], config['anm_passwd']    
     wp = wPageNtlm(anm_user, anm_passwd, ssl=True)    
@@ -305,7 +305,7 @@ def estudo_finish():
         dados['estudo'].update(finished)  
     else:
         dados['estudo'] = finished
-    ProcessManager.updateDados(key, 'estudo', dados['estudo'])
+    ProcessManager[key].update('estudo', dados['estudo'])
     return Response(status=204)
 
 
