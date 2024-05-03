@@ -53,12 +53,13 @@ else:
 # 1. to allow the anm domain (js,html injection) request this app on localhost
 # 2. development mode when frontend is run by nodejs
 CORS(app) # This will enable CORS for all routes
-app.config['CACHE_DEFAULT_TIMEOUT'] = 31536000 # 1 year of cache
+app.config['CACHE_DEFAULT_TIMEOUT'] = 5 # how long cache should last in seconds
 # Flask-Cache package
-app.config['CACHE_THRESHOLD'] = 10000
+app.config['CACHE_THRESHOLD'] = 10000 #  maximum number items stored cache folder
 # cache directory - making a temporary directory that don't gets erased timely
 app.config['CACHE_DIR'] = pathlib.Path.home() / pathlib.Path(".workapp/cache") 
 app.config['CACHE_TYPE'] = 'FileSystemCache' 
+app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0 
 
 cache = Cache(app)
 cache.set('processos_dict', {})
@@ -175,10 +176,10 @@ def startTableAnalysis():
     ProcessManager[name].update('estudo', dbdata['estudo'])      
     return jsdata 
 
-def backgroundUpdate(sleep=5):
+def backgroundUpdate(sleep=5, oneshot=False):
     """Thread running on background updating cached dictionary every sleep seconds"""    
     processos = {} 
-    while True:  
+    while True and not oneshot:  
         processos.clear()
         for process in wf.currentProcessGet():    
             processos.update({process : ProcessManager[process].dados})  
@@ -306,6 +307,8 @@ def estudo_finish():
     else:
         dados['estudo'] = finished
     ProcessManager[key].update('estudo', dados['estudo'])
+    # force update of list of processos
+    threading.Thread(target=backgroundUpdate, kwargs={'oneshot':True}).start() 
     return Response(status=204)
 
 
