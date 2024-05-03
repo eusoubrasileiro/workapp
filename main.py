@@ -53,13 +53,13 @@ else:
 # 1. to allow the anm domain (js,html injection) request this app on localhost
 # 2. development mode when frontend is run by nodejs
 CORS(app) # This will enable CORS for all routes
-app.config['CACHE_DEFAULT_TIMEOUT'] = 5 # how long cache should last in seconds
+app.config['CACHE_DEFAULT_TIMEOUT'] = 7 # how long cache should last in seconds
 # Flask-Cache package
 app.config['CACHE_THRESHOLD'] = 10000 #  maximum number items stored cache folder
 # cache directory - making a temporary directory that don't gets erased timely
 app.config['CACHE_DIR'] = pathlib.Path.home() / pathlib.Path(".workapp/cache") 
 app.config['CACHE_TYPE'] = 'FileSystemCache' 
-app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0 
+app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 3600  # STATIC files cache timeout in seconds
 
 cache = Cache(app)
 cache.set('processos_dict', {})
@@ -176,18 +176,25 @@ def startTableAnalysis():
     ProcessManager[name].update('estudo', dbdata['estudo'])      
     return jsdata 
 
-def backgroundUpdate(sleep=5, oneshot=False):
+def backgroundUpdate(sleep=4, oneshot=False):
     """Thread running on background updating cached dictionary every sleep seconds"""    
+    # could implement lazy load for updating only the dados part after
+    # two background updates - but i am too lazy for that 
     processos = {} 
     while True and not oneshot:  
         processos.clear()
         for process in wf.currentProcessGet():    
             processos.update({process : ProcessManager[process].dados})  
-        cache.set('processos_dict', processos)   
-        time.sleep(sleep)    
+        cache.set('processos_dict', processos)  
+        if not oneshot:            
+            time.sleep(sleep)    
 
 @app.route('/flask/list', methods=['GET'])
 def getProcessos():       
+    """get list of processos from database"""
+    # if cache is empty, start background update thread
+    if cache.get('processos_dict') is None:
+        backgroundUpdate(oneshot=True)
     return { 
             'processos' : cache.get('processos_dict'),
             'status'    : { 
