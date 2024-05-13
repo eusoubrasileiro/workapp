@@ -139,6 +139,7 @@ def startTableAnalysis():
     table_pd = None # pandas table
     # to update-add process|database start by default not done now
     if 'estudo' not in dbdata:
+        ProcessManager[name]['estudo'] = {} # this key is missing
         dbdata['estudo'] = {'done' : False, 'time' : datetime.datetime.now() }
     if 'estudo' in dbdata:
         if 'table' in dbdata['estudo']: # from database        
@@ -170,9 +171,7 @@ def startTableAnalysis():
         # database saves table as dataframe ->dict != from prettyfied pandas jsdata json-list           
         dbdata['estudo']['table'] = table_pd.to_dict()            
     # react receives main table data as `dataframe.values.tolist()`
-    # but database data is 'dict' not 'list' so must be converted
-    
-    # add or update ['estudo] fields key
+    # but database data is 'dict' not 'list' so must be converted    
     ProcessManager[name].update('estudo', dbdata['estudo'])      
     return jsdata 
 
