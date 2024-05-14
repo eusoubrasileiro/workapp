@@ -15,13 +15,15 @@ import datetime
 import copy
 from io import BytesIO
 
+from cachelib.file import FileSystemCache
+from flask_session import Session
 from flask_cors import CORS
-from flask_caching import Cache
 from flask import (
         Flask, 
         request, 
         Response,
-        send_from_directory
+        send_from_directory,
+        session
     )
 
 from aidbag.general import pdf
@@ -53,19 +55,16 @@ else:
 # 1. to allow the anm domain (js,html injection) request this app on localhost
 # 2. development mode when frontend is run by nodejs
 CORS(app) # This will enable CORS for all routes
-app.config['CACHE_DEFAULT_TIMEOUT'] = 7 # how long cache should last in seconds
-# Flask-Cache package
-app.config['CACHE_THRESHOLD'] = 10000 #  maximum number items stored cache folder
-# cache directory - making a temporary directory that don't gets erased timely
-app.config['CACHE_DIR'] = pathlib.Path.home() / pathlib.Path(".workapp/cache") 
-app.config['CACHE_TYPE'] = 'FileSystemCache' 
+# I never needed cache I need a session storage
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 3600  # STATIC files cache timeout in seconds
-
-cache = Cache(app)
-cache.set('processos_dict', {})
+# Flask-Session package - every client has a client data store on filesystem
+# app.config['SESSION_PERMANENT'] = True # independent of tab-closed in browser still same session (default)
+app.config['SESSION_TYPE'] = 'filesystem' # store session data on filesystem
+app.config['PERMANENT_SESSION_LIFETIME'] = 15*60 # The session will expire delete files in folder after this time
+app.config['SESSION_FILE_DIR'] = pathlib.Path.home() / pathlib.Path(".workapp/session") # The directory where session files are stored.
+Session(app)
 
 # routes for development or production
-
 if os.environ.get('APP_ENV') == 'production':
     # Serving 'production' React App from here flask
     # it's already using the /build as static folder (above!)
@@ -81,11 +80,6 @@ else:
     @app.route('/')
     def index():
         return "In development mode!<br> RUN `npm start` from workapp project folder"
-
-def run():
-    threading.Thread(target=backgroundUpdate).start()
-    app.run(host='0.0.0.0', debug=(os.environ.get('APP_ENV') == 'development'), port=5000)   
-    
 
 def uiTableData(table): 
     """
@@ -175,31 +169,22 @@ def startTableAnalysis():
     ProcessManager[name].update('estudo', dbdata['estudo'])      
     return jsdata 
 
-def backgroundUpdate(sleep=4, oneshot=False):
-    """Thread running on background updating cached dictionary every sleep seconds"""    
-    # could implement lazy load for updating only the dados part after
-    # two background updates - but i am too lazy for that 
-    processos = {} 
-    while True and not oneshot:  
-        processos.clear()
-        for process in wf.currentProcessGet():    
-            processos.update({process : ProcessManager[process].dados})  
-        cache.set('processos_dict', processos)  
-        if not oneshot:            
-            time.sleep(sleep)    
 
 @app.route('/flask/list', methods=['GET'])
-def getProcessos():       
+def getProcessos():           
     """get list of processos from database"""
-    # if cache is empty, start background update thread
-    if cache.get('processos_dict') is None:
-        backgroundUpdate(oneshot=True)
+    # could implement lazy load for updating only the dados part after 
+    # but 1s delay is not a problem
+    processos = {} 
+    for process in wf.currentProcessGet():    
+        processos.update({process : ProcessManager[process].dados})  
     return { 
-            'processos' : cache.get('processos_dict'),
+            'processos' : processos,
             'status'    : { 
                 'workfolder' : config['processos_path']
                 }
             }
+
 
 def updatedb(name, data, what='eventview', save=False):    
     """update cached estudo table and estudo file on database DADOS column"""        

@@ -14,11 +14,11 @@ if __name__ == '__main__':
     else:
         os.environ['APP_ENV'] = 'production'
         port = 5000
-    from . import main # can only import after APP_ENV is set
+    from .main import app # can only import after APP_ENV is set
     # Execute the command in the shell
     def open_browser():
         time.sleep(1.5)
         subprocess.run(f"google-chrome http://localhost:{port}", shell=True)
     threading.Thread(target=open_browser).start()    
-    main.run()  # Call the original main function    
+    app.run(host='0.0.0.0', debug=(os.environ.get('APP_ENV') == 'development'), port=5000) # Call the original main function    
     
