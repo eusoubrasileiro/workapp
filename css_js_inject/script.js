@@ -110,7 +110,10 @@ function finished(){
     .then(response => {
       // Handle response
       study_finished = true;
-      $('#workapp-finished-study').text('Saved!');
+      if(response.status==400)
+        $('#workapp-finished-study').text('NOT FOUND! But file Saved on folder!');
+      else
+        $('#workapp-finished-study').text('Saved!');
     })
     .catch(error => {
       alert(`Error on estudo_finish request ${error}`);

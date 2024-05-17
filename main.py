@@ -17,6 +17,7 @@ from io import BytesIO
 
 from cachelib.file import FileSystemCache
 from flask_session import Session
+from flask_caching import Cache
 from flask_cors import CORS
 from flask import (
         Flask, 
@@ -63,6 +64,9 @@ app.config['SESSION_TYPE'] = 'filesystem' # store session data on filesystem
 app.config['PERMANENT_SESSION_LIFETIME'] = 15*60 # The session will expire delete files in folder after this time
 app.config['SESSION_FILE_DIR'] = pathlib.Path.home() / pathlib.Path(".workapp/session") # The directory where session files are stored.
 Session(app)
+cache = Cache(app, 
+    config={'CACHE_TYPE': 'filesystem', 
+            'CACHE_DIR': pathlib.Path.home() / pathlib.Path(".workapp/cache")})
 
 # routes for development or production
 if os.environ.get('APP_ENV') == 'production':
@@ -171,6 +175,7 @@ def startTableAnalysis():
 
 
 @app.route('/flask/list', methods=['GET'])
+@cache.cached(timeout=15) # 15 seconds cache
 def getProcessos():           
     """get list of processos from database"""
     # could implement lazy load for updating only the dados part after 
@@ -272,34 +277,42 @@ def estudo_finish():
        uses config doc prefix
     """
     key = request.json.get('process')
-    dados = ProcessManager[key].dados
+    # from js estudos validos 1, 8, 21 // interf, opçao, m. regime com redução
+    enumber = request.json.get('estudo_number')  
+    keyfound = key in ProcessManager
+    if keyfound:
+        dados = ProcessManager[key].dados
     number, year = numberyearPname(key)
     anm_user, anm_passwd = config['anm_user'], config['anm_passwd']    
-    wp = wPageNtlm(anm_user, anm_passwd, ssl=True)    
-    url = f"http://sigareas.dnpm.gov.br/Paginas/Usuario/Imprimir.aspx?estudo=1&tipo=RELATORIO&numero={number}&ano={year}"    
-    cookie = request.json.get('cookieData')
-    enumber = request.json.get('estudo_number')
+    wp = wPageNtlm(anm_user, anm_passwd, ssl=True)        
+    url = f"http://sigareas.dnpm.gov.br/Paginas/Usuario/Imprimir.aspx?estudo={enumber}&tipo=RELATORIO&numero={number}&ano={year}"    
+    cookie = request.json.get('cookieData')    
     file = wp.get(url, cookies=cookie, verify=False)
     path = (pathlib.Path(processPath(key)) / 
         pathlib.Path(f"{config['sigares']['doc_prefix']}_{number}_{year}_{enumber}.pdf"))
+    if not path.parent.exists():
+        path.parent.mkdir(parents=True)        
     with path.open('wb') as f: 
         f.write(file.content)   
-    bytes_stream = BytesIO(file.content)
-    extracted_text = pdf.readPdfText(bytes_stream) # also save pdf text extract as 'sigareas_pdf' key
-    finished = {'done': True, 
-                'time' : datetime.datetime.now(), 
-                'sigareas': {
-                    'pdf_text' : extracted_text, 
-                    'pdf_path' : str(path.absolute()) 
-                    } 
-                }
-    if 'estudo' in dados:
-        dados['estudo'].update(finished)  
+    if keyfound:
+        bytes_stream = BytesIO(file.content)
+        extracted_text = pdf.readPdfText(bytes_stream) # also save pdf text extract as 'sigareas_pdf' key
+        finished = {'done': True, 
+                    'time' : datetime.datetime.now(), 
+                    'sigareas': {
+                        'pdf_text' : extracted_text, 
+                        'pdf_path' : str(path.absolute()) 
+                        } 
+                    }
+        if 'estudo' in dados:
+            dados['estudo'].update(finished)  
+        else:
+            dados['estudo'] = finished
+        ProcessManager[key].update('estudo', dados['estudo'])
+        return Response(status=204)
     else:
-        dados['estudo'] = finished
-    ProcessManager[key].update('estudo', dados['estudo'])
-    # force update of list of processos
-    threading.Thread(target=backgroundUpdate, kwargs={'oneshot':True}).start() 
-    return Response(status=204)
+        print(f'process {key} not found - but file saved on folder', file=sys.stderr)
+        return Response(status=404)
+    
 
 
