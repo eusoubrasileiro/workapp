@@ -4,18 +4,61 @@ import { useState, useEffect} from 'react';
 import { clipboardCopy, rowStatus } from './utils';
 import './index.css';
 
+const Button = ({ onClick, children }) => {
+  const buttonStyle = {
+    color: '#fff',
+    backgroundColor: '#007bff',
+    border: 'none',
+    cursor: 'pointer',
+  };
+  return (
+    <button style={buttonStyle} onClick={onClick}>
+      {children}
+    </button>
+  );
+};
 
 function ProcessRow({name, dados}) {
+  const [pdados, setPDados] = useState([]);
+
+  useEffect(() => {
+    setPDados(dados);    
+  }, []); // will run only once
+
+  function download(){
+    // fast can be 'true' or 'false'
+    fetch(`/flask/download?process=${name}`)
+    .then(res => res.json()
+    .then(data => {
+      setPDados(data); // set and wait    
+      // a refresh... ok for now
+    }))
+    .catch((error) => {      
+      console.info(`Error on downloading process request ${error}`);
+    });      
+  }
+
+  if(Object.keys(pdados).length == 0)
+    return (<>
+      {rowStatus(pdados)}  
+      <a>{name}</a> 
+      <div><img src="https://sei.anm.gov.br/imagens/sei_logo_azul_celeste.jpg" width="25"></img></div>
+      <div><button className="copyprocess" onClick={() => clipboardCopy(name)} > { name }</button> </div>
+      <a className="SCM" > 📁 </a>       
+      <a className="Poligonal" > ▱ </a>      
+      <Button className="DownloadMissing" onClick={()=> download()} children={'Download Missing'}/>        
+    </>
+    )
 
   return (
     <>
-      {rowStatus(dados)}   
+      {rowStatus(pdados)}   
       <Link to={`/table/${ name.replace('/', '-') }`} > {name} </Link> 
       <div><img src="https://sei.anm.gov.br/imagens/sei_logo_azul_celeste.jpg" width="25"></img></div>
-      <div><button className="copyprocess" onClick={() => clipboardCopy(dados['NUP'])} > { dados['NUP'] }</button> </div>
+      <div><button className="copyprocess" onClick={() => clipboardCopy(pdados['NUP'])} > { pdados['NUP'] }</button> </div>
       <Link className="SCM" to={`/scm_page/${ name.replace('/', '-') }`} > 📁 </Link>       
       <Link className="Poligonal" to={`/polygon_page/${ name.replace('/', '-') }`} > ▱ </Link>      
-      {dados['tipo']}        
+      {pdados['tipo']}        
     </> 
   )   
 }

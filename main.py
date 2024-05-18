@@ -174,6 +174,8 @@ def startTableAnalysis():
     return jsdata 
 
 
+
+
 @app.route('/flask/list', methods=['GET'])
 @cache.cached(timeout=15) # 15 seconds cache
 def getProcessos():           
@@ -181,8 +183,13 @@ def getProcessos():
     # could implement lazy load for updating only the dados part after 
     # but 1s delay is not a problem
     processos = {} 
-    for process in wf.currentProcessGet():    
-        processos.update({process : ProcessManager[process].dados})  
+    for process_name in wf.currentProcessGet():    
+        process = ProcessManager[process_name]
+        if process:
+            dados = process.dados
+        else: # None - not found
+            dados = {} # return empty dictionary 
+        processos.update({process_name : dados})  
     return { 
             'processos' : processos,
             'status'    : { 
@@ -220,24 +227,43 @@ def update_collapse():
 
 from bs4 import BeautifulSoup as soup 
 
+
+#like /flask/download?process=830.691/2023
+@app.route('/flask/download', methods=['GET'])
+def download():
+    name = request.args.get('process')      
+    process = ProcessManager[name]
+    if process is None: # for safety reasons (never overwrite)
+        print(f'downloading process {name}', file=sys.stderr)      
+        anm_user, anm_passwd = config['anm_user'], config['anm_passwd']        
+        process = ProcessManager.GetorCreate(name, wpagentlm=wPageNtlm(anm_user, anm_passwd))
+    return process.dados
+
+
 # like /scm?process=830.691/2023
-@app.route('/flask/scm', methods=['GET'], strict_slashes=False)
+@app.route('/flask/scm', methods=['GET'])
 def scm_page():
     """return scm page stored only the piece with processo information"""
     name =  request.args.get('process')
     print(f'process is {name}', file=sys.stderr)
-    html_content = ProcessManager[name].basic_html
+    process = ProcessManager[name]
+    if process is None:
+        return Response(status=404)
+    html_content = process.basic_html
     sp = soup(html_content, "html.parser")
     res = sp.select('body form div table table:nth-child(3)')[0]    
     return str(res)
 
 # like /polygon?process=830.691/2023
-@app.route('/flask/polygon', methods=['GET'], strict_slashes=False)
+@app.route('/flask/polygon', methods=['GET'])
 def poly_page():
     """return scm polyogon page stored only the piece with processo information"""
     name =  request.args.get('process')
     print(f'process is {name}', file=sys.stderr)
-    html_content = ProcessManager[name].polygon_html
+    process = ProcessManager[name]
+    if process is None:
+        return Response(status=404)
+    html_content = process.polygon_html
     sp = soup(html_content, "html.parser")
     res = sp.select('body form div table table:nth-child(3)')[0]    
     return str(res)
@@ -279,9 +305,10 @@ def estudo_finish():
     key = request.json.get('process')
     # from js estudos validos 1, 8, 21 // interf, opçao, m. regime com redução
     enumber = request.json.get('estudo_number')  
-    keyfound = key in ProcessManager
+    process = ProcessManager[key]    
+    keyfound = True if process else False
     if keyfound:
-        dados = ProcessManager[key].dados
+        dados = process.dados
     number, year = numberyearPname(key)
     anm_user, anm_passwd = config['anm_user'], config['anm_passwd']    
     wp = wPageNtlm(anm_user, anm_passwd, ssl=True)        
