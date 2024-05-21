@@ -1,4 +1,24 @@
 
+const Button = ({ onClick, children, style='simple'}) => {
+    const buttonStyle = {
+        color: 'white',
+        'backgroundColor': '#007bff',  
+        'border-color' : 'white',
+        'border-radius': '0.25rem'                    
+      };  
+    if(style=='danger'){
+        buttonStyle['backgroundColor'] = 'lightgray';
+        buttonStyle['color'] = 'red';
+        buttonStyle['font-weight'] = 'bold';
+        buttonStyle['font-variant'] = 'small-caps';
+    }
+    return (
+      <button className='cbutton' style={buttonStyle} onClick={onClick}>
+        {children}
+      </button>
+    );
+  };
+
 function rowStatus(dados) {
     if (dados.hasOwnProperty('estudo')) {
         if (dados.estudo.done)
@@ -51,4 +71,4 @@ function clipboardCopy(text) {
         });
 }
 
-export { rowStatus, clipboardCopy };
+export { rowStatus, clipboardCopy, Button };

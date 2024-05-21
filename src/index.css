@@ -7,6 +7,13 @@ html {
 /* main page */
 /* <!-- https://css-tricks.com/snippets/css/a-guide-to-flexbox/ --> */
 
+div.selectProcess {
+  display: flex;        
+  align-content: center;
+  flex-direction: column;
+  align-items: center;  
+}
+
 div.flexcontainer
 {
   display: flex;        

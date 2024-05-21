@@ -228,6 +228,18 @@ def update_collapse():
 from bs4 import BeautifulSoup as soup 
 
 
+#like /flask/redo?process=830.691/2023
+@app.route('/flask/redo', methods=['GET'])
+def redo():
+    """to implement still redo interferência"""
+    name = request.args.get('process')      
+    process = ProcessManager[name]
+    if process is None: # for safety reasons (never overwrite)
+        print(f'downloading process {name}', file=sys.stderr)      
+        anm_user, anm_passwd = config['anm_user'], config['anm_passwd']        
+        process = ProcessManager.GetorCreate(name, wpagentlm=wPageNtlm(anm_user, anm_passwd))
+    return process.dados
+
 #like /flask/download?process=830.691/2023
 @app.route('/flask/download', methods=['GET'])
 def download():
@@ -335,7 +347,7 @@ def estudo_finish():
             dados['estudo'].update(finished)  
         else:
             dados['estudo'] = finished
-        ProcessManager[key].update('estudo', dados['estudo'])
+        ProcessManager[key].update_dados(dados)
         return Response(status=204)
     else:
         print(f'process {key} not found - but file saved on folder', file=sys.stderr)
