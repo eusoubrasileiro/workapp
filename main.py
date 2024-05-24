@@ -15,7 +15,6 @@ import datetime
 import copy
 from io import BytesIO
 
-from cachelib.file import FileSystemCache
 from flask_session import Session
 from flask_caching import Cache
 from flask_cors import CORS
@@ -28,11 +27,11 @@ from flask import (
     )
 
 from aidbag.general import pdf
-
 from aidbag.anm.careas import (
     config, 
     processPath, 
-    wPageNtlm
+    wPageNtlm,
+    estudos
     )
 from aidbag.anm.careas import workflows as wf 
 from aidbag.anm.careas.scm import ProcessManager
@@ -56,10 +55,8 @@ else:
 # 1. to allow the anm domain (js,html injection) request this app on localhost
 # 2. development mode when frontend is run by nodejs
 CORS(app) # This will enable CORS for all routes
-# I never needed cache I need a session storage
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 3600  # STATIC files cache timeout in seconds
 # Flask-Session package - every client has a client data store on filesystem
-# app.config['SESSION_PERMANENT'] = True # independent of tab-closed in browser still same session (default)
 app.config['SESSION_TYPE'] = 'filesystem' # store session data on filesystem
 app.config['PERMANENT_SESSION_LIFETIME'] = 15*60 # The session will expire delete files in folder after this time
 app.config['SESSION_FILE_DIR'] = pathlib.Path.home() / pathlib.Path(".workapp/session") # The directory where session files are stored.
@@ -170,10 +167,8 @@ def startTableAnalysis():
         dbdata['estudo']['table'] = table_pd.to_dict()            
     # react receives main table data as `dataframe.values.tolist()`
     # but database data is 'dict' not 'list' so must be converted    
-    ProcessManager[name].update('estudo', dbdata['estudo'])      
+    ProcessManager[name].update({'estudo' : dbdata['estudo']})      
     return jsdata 
-
-
 
 
 @app.route('/flask/list', methods=['GET'])
@@ -209,7 +204,7 @@ def updatedb(name, data, what='eventview', save=False):
         elif 'eventview' in what:
             estudo['states'].update({'eventview' : data })    
         # add or update ['estudo'] fields key  
-        ProcessManager[name].update('estudo', estudo)     
+        ProcessManager[name].update({'estudo' : estudo})     
 
 @app.route('/flask/update_checkbox', methods=['POST'])
 def update_checkbox():
@@ -234,10 +229,16 @@ def redo():
     """to implement still redo interferência"""
     name = request.args.get('process')      
     process = ProcessManager[name]
-    if process is None: # for safety reasons (never overwrite)
-        print(f'downloading process {name}', file=sys.stderr)      
-        anm_user, anm_passwd = config['anm_user'], config['anm_passwd']        
-        process = ProcessManager.GetorCreate(name, wpagentlm=wPageNtlm(anm_user, anm_passwd))
+    # dados = process.dados
+    # if 'estudo' in dados:
+    #     estudo = dados['estudo']
+    #     if estudo['type'] == 'interferencia':
+    #         estudos.Interferencia.make(wPageNtlm(anm_user, anm_passwd), name)
+    #     anm_user, anm_passwd = config['anm_user'], config['anm_passwd']        
+    # if process is None: # for safety reasons (never overwrite)
+    #     print(f'downloading process {name}', file=sys.stderr)      
+    #     anm_user, anm_passwd = config['anm_user'], config['anm_passwd']        
+    #     process = ProcessManager.GetorCreate(name, wpagentlm=wPageNtlm(anm_user, anm_passwd))
     return process.dados
 
 #like /flask/download?process=830.691/2023
@@ -347,7 +348,7 @@ def estudo_finish():
             dados['estudo'].update(finished)  
         else:
             dados['estudo'] = finished
-        ProcessManager[key].update_dados(dados)
+        ProcessManager[key].update(dados)
         return Response(status=204)
     else:
         print(f'process {key} not found - but file saved on folder', file=sys.stderr)
