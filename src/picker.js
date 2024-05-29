@@ -29,6 +29,12 @@ function ProcessRow({name, dados, setLoading}) {
     setLoading(false);
   }
 
+  function errorStatus(dados){
+    if(dados.hasOwnProperty('prework') && dados.prework.status == 'error')
+      return <>{dados.prework.error}</>
+    return <></>
+  }
+
   if(Object.keys(pdados).length == 0) // no dados - process not downloaded
     return (<>
       {rowStatus(pdados)}  
@@ -44,14 +50,14 @@ function ProcessRow({name, dados, setLoading}) {
   return (
     <>
       {rowStatus(pdados)}   
-      <Link to={`/table/${ name.replace('/', '-') }`} > {name} </Link> 
+      <Link to={`/table/${ name.replace('/', '-') }`} > {name} </Link>
       <div><img src="https://sei.anm.gov.br/imagens/sei_logo_azul_celeste.jpg" width="25"></img></div>
       <div><button className="copyprocess" onClick={() => clipboardCopy(pdados['NUP'])} > { pdados['NUP'] }</button> </div>
       <Link className="SCM" to={`/scm_page/${ name.replace('/', '-') }`} > 📁 </Link>       
       <Link className="Poligonal" to={`/polygon_page/${ name.replace('/', '-') }`} > ▱ </Link>           
-      {pdados['tipo']}        
-      <div>           </div>
+      {pdados['tipo']}                    
       <Button style='danger' onClick={()=> download()} children={'🛠redo'}/>
+      <div className='errorStatus'>{errorStatus(pdados)}</div>
     </> 
   )   
 }

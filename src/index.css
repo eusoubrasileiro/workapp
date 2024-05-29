@@ -7,6 +7,12 @@ html {
 /* main page */
 /* <!-- https://css-tricks.com/snippets/css/a-guide-to-flexbox/ --> */
 
+div.errorStatus {
+  font-weight:lighter;  
+  color: red;
+  font-family: Tahoma;
+}
+
 div.selectProcess {
   display: flex;        
   align-content: center;

@@ -34,10 +34,9 @@ from aidbag.anm.careas import (
     estudos
     )
 from aidbag.anm.careas import workflows as wf 
-from aidbag.anm.careas.scm import ProcessManager
-from aidbag.anm.careas.scm.util import (
-    fmtPname,
-    numberyearPname,    
+from aidbag.anm.careas.scm import (
+    ProcessManager,
+    pud
     )
 from aidbag.anm.careas.estudos.interferencia import (
         Interferencia, 
@@ -297,11 +296,10 @@ def get_prioridade():
         'checkboxes' in dados['estudo']['states']):        
         dict_ =  dados['estudo']['states']['checkboxes'] # json estudo table 
         # turn in acceptable javascript format for processes - otherwise wont work 
-        # 1. no dots 
-        # 2. no leading zeros 
+        # here 1. no dots 2. no leading zeros 
         def fmtPnameJs(name):
-            num, year = numberyearPname(name, int)        
-            return '/'.join([str(num),str(year)])        
+            num, year = pud(name).numberyear
+            return '/'.join([str(int(num)),str(int(year))])        
         return { fmtPnameJs(key) : value for key, value in dict_.items() } # remove dot for javascript use
     # return this in case opção de área
     print(f'js_inject process is {key} did not find checkboxes states. \n TODO implement Opção/Table checkbox', file=sys.stderr)
@@ -322,14 +320,14 @@ def estudo_finish():
     keyfound = True if process else False
     if keyfound:
         dados = process.dados
-    number, year = numberyearPname(key)
+    number, year = pud(key).numberyear
     anm_user, anm_passwd = config['anm_user'], config['anm_passwd']    
     wp = wPageNtlm(anm_user, anm_passwd, ssl=True)        
     url = f"http://sigareas.dnpm.gov.br/Paginas/Usuario/Imprimir.aspx?estudo={enumber}&tipo=RELATORIO&numero={number}&ano={year}"    
     cookie = request.json.get('cookieData')    
     file = wp.get(url, cookies=cookie, verify=False)
     path = (pathlib.Path(processPath(key)) / 
-        pathlib.Path(f"{config['sigares']['doc_prefix']}_{number}_{year}_{enumber}.pdf"))
+        pathlib.Path(f"{config['sigareas']['doc_prefix']}_{number}_{year}_{enumber}.pdf"))
     if not path.parent.exists():
         path.parent.mkdir(parents=True)        
     with path.open('wb') as f: 
