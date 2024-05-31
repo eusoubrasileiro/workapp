@@ -19,16 +19,15 @@ const Button = ({ onClick, children, style='simple'}) => {
     );
   };
 
-function rowStatus(dados) {
-    if (dados.hasOwnProperty('estudo')) {
+  function estudoStatus(dados) {
+    if (dados.hasOwnProperty('estudo'))
         if (dados.estudo.done)
-            return <a>&#9989;</a>
+            return <a>✅</a>
         else
-            return <a>&#x23F3;</a>
-    }
+            return <a>◼</a>  
     else
-        return <a>&#10060;</a>
-}
+        return <a>⛔</a>
+  }
   
 function clipboardCopy(text) {
 
@@ -71,4 +70,4 @@ function clipboardCopy(text) {
         });
 }
 
-export { rowStatus, clipboardCopy, Button };
+export { estudoStatus, clipboardCopy, Button };

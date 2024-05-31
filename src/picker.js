@@ -1,11 +1,9 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useState, useEffect} from 'react';
-import { clipboardCopy, rowStatus, Button } from './utils';
+import { clipboardCopy, Button, estudoStatus } from './utils';
 import './index.css';
 import './loader.css';
-
-
 
 function ProcessRow({name, dados, setLoading}) {
   const [pdados, setPDados] = useState([]);
@@ -29,35 +27,35 @@ function ProcessRow({name, dados, setLoading}) {
     setLoading(false);
   }
 
-  function errorStatus(dados){
+  function preworkStatus(dados){
     if(dados.hasOwnProperty('prework') && dados.prework.status == 'error')
-      return <>{dados.prework.error}</>
-    return <></>
+      return <>{dados.prework.error}</>;
+    return <></>;
   }
 
-  if(Object.keys(pdados).length == 0) // no dados - process not downloaded
-    return (<>
-      {rowStatus(pdados)}  
-      <a>{name}</a> 
-      <div><img src="https://sei.anm.gov.br/imagens/sei_logo_azul_celeste.jpg" width="25"></img></div>
-      <div><button className="copyprocess" onClick={() => clipboardCopy(name)} > { name }</button> </div>
-      <a className="SCM" > 📁 </a>       
-      <a className="Poligonal" > ▱ </a>      
-      <Button onClick={()=> download()} children={'Download Missing'}/>        
-    </>
-    )
+  let hasEstudo = dados.hasOwnProperty('estudo');
+  let hasDados = Object.keys(pdados).length > 0;
 
   return (
     <>
-      {rowStatus(pdados)}   
-      <Link to={`/table/${ name.replace('/', '-') }`} > {name} </Link>
+      {estudoStatus(pdados)}   
+      { hasEstudo
+        ? <Link to={`/table/${ name.replace('/', '-') }`} > {name} </Link>
+        : <a>{name}</a>
+      }      
       <div><img src="https://sei.anm.gov.br/imagens/sei_logo_azul_celeste.jpg" width="25"></img></div>
       <div><button className="copyprocess" onClick={() => clipboardCopy(pdados['NUP'])} > { pdados['NUP'] }</button> </div>
-      <Link className="SCM" to={`/scm_page/${ name.replace('/', '-') }`} > 📁 </Link>       
-      <Link className="Poligonal" to={`/polygon_page/${ name.replace('/', '-') }`} > ▱ </Link>           
+      { hasDados 
+        ? <Link className="SCM" to={`/scm_page/${ name.replace('/', '-') }`} > 📁 </Link> 
+        : <a className="SCM" > 📁 </a> 
+      }      
+      { hasDados
+        ? <Link className="Poligonal" to={`/polygon_page/${ name.replace('/', '-') }`} > ▱ </Link>           
+        : <a className="Poligonal" > ▱ </a>    
+      }
       {pdados['tipo']}                    
       <Button style='danger' onClick={()=> download()} children={'🛠redo'}/>
-      <div className='errorStatus'>{errorStatus(pdados)}</div>
+      <div className='errorStatus'>{preworkStatus(pdados)}</div>
     </> 
   )   
 }

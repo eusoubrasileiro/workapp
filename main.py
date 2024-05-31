@@ -132,9 +132,6 @@ def startTableAnalysis():
     dbdata = ProcessManager[name].dados
     table_pd = None # pandas table
     # to update-add process|database start by default not done now
-    if 'estudo' not in dbdata:
-        ProcessManager[name]['estudo'] = {} # this key is missing
-        dbdata['estudo'] = {'done' : False, 'time' : datetime.datetime.now() }
     if 'estudo' in dbdata:
         if 'table' in dbdata['estudo']: # from database        
             table_pd = pd.DataFrame.from_dict(dbdata['estudo']['table'])                

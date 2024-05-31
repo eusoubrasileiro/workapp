@@ -95,13 +95,23 @@ button.copyprocess:active {
   color: black;
 }
 
-#prioridade { 
+.prioridade { 
   font-weight: bold; 
 }
 
-#prioridade_data { 
+.prioridade #scm  { 
   font-weight: bold; 
+  color: blue;
+}
+
+.prioridade #graph.warn { 
+  font-weight: bolder; 
   color: red;
+}
+
+.prioridade #graph.ok { 
+  font-weight: bolder; 
+  color: blue;
 }
 
 

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { clipboardCopy, rowStatus } from './utils';
+import { clipboardCopy, estudoStatus } from './utils';
 import { Link } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 import { Tooltip } from 'react-tooltip'
@@ -213,6 +213,16 @@ function IeTable({studyname, estudo}){
 }
 
 
+function Prioridade(process){  // show prioridade / prioridadec side-by-side
+  var prioridadec = 'same';
+  var style = 'ok';
+  if(process.hasOwnProperty('prioridadec') && process.prioridade != process.prioridadec){
+    prioridadec ='⚠️'+prioridadec;  
+    style='warn'; 
+  }
+  return <a className='prioridade'>Prioridade <span id='scm'>{process.prioridade}</span>↔<span id='graph' className={style}>{prioridadec}</span></a>
+} 
+
 function TableAnalysis() {
   const { name } = useParams();
   const [ process, setProcess ] = useState(null); 
@@ -246,12 +256,15 @@ function TableAnalysis() {
   if (process.estudo.hasOwnProperty('table'))
     analyze_table = <IeTable studyname={fmtdname} estudo={process.estudo}/>
 
+
+
+
   return (
     <>
     <div className="tablecontainer">
       <div className="navbarcontainer">
         <a id='tipo'> { process.tipo }</a>
-        <a id='prioridade'>Prioridade: <span id='prioridade_data'>{ process.prioridade }</span> </a> 
+        { Prioridade(process) }        
         <Link className="SCM" to={`/scm_page/${ name.replace('/', '-') }`} > 📁 </Link>  
         <Link className="Poligonal" to={`/polygon_page/${ name.replace('/', '-') }`} > ▱ </Link>
         <button className="copyprocess" onClick={() => clipboardCopy(process.NUP)} > { process.NUP }</button>
@@ -261,7 +274,7 @@ function TableAnalysis() {
             </a> 
           </div> 
         <div>
-          {rowStatus(process)}
+          {estudoStatus(process)}
         </div>              
       </div>        
       {analyze_table}
