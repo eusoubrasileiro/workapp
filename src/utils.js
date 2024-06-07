@@ -1,16 +1,16 @@
 
 const Button = ({ onClick, children, style='simple'}) => {
     const buttonStyle = {
-        color: 'white',
+        'color': 'white',
         'backgroundColor': '#007bff',  
-        'border-color' : 'white',
-        'border-radius': '0.25rem'                    
+        'borderColor' : 'white',
+        'borderRadius': '0.25rem'                    
       };  
     if(style=='danger'){
-        buttonStyle['backgroundColor'] = 'lightgray';
+        buttonStyle['backgroundColor'] = 'white';
         buttonStyle['color'] = 'red';
-        buttonStyle['font-weight'] = 'bold';
-        buttonStyle['font-variant'] = 'small-caps';
+        buttonStyle['fontWeight'] = 'bold';
+        buttonStyle['fontVariant'] = 'small-caps';
     }
     return (
       <button className='cbutton' style={buttonStyle} onClick={onClick}>
@@ -24,7 +24,7 @@ const Button = ({ onClick, children, style='simple'}) => {
         if (dados.estudo.done)
             return <a>✅</a>
         else
-            return <a>◼</a>  
+            return <a>⬜</a>  
     else
         return <a>⛔</a>
   }
