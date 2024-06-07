@@ -14,9 +14,9 @@ import argparse
 import datetime
 import copy
 from io import BytesIO
+from bs4 import BeautifulSoup as soup 
 
 from flask_session import Session
-from flask_caching import Cache
 from flask_cors import CORS
 from flask import (
         Flask, 
@@ -60,9 +60,6 @@ app.config['SESSION_TYPE'] = 'filesystem' # store session data on filesystem
 app.config['PERMANENT_SESSION_LIFETIME'] = 15*60 # The session will expire delete files in folder after this time
 app.config['SESSION_FILE_DIR'] = pathlib.Path.home() / pathlib.Path(".workapp/session") # The directory where session files are stored.
 Session(app)
-cache = Cache(app, 
-    config={'CACHE_TYPE': 'filesystem', 
-            'CACHE_DIR': pathlib.Path.home() / pathlib.Path(".workapp/cache")})
 
 # routes for development or production
 if os.environ.get('APP_ENV') == 'production':
@@ -167,20 +164,33 @@ def startTableAnalysis():
     return jsdata 
 
 
-@app.route('/flask/list', methods=['GET'])
-@cache.cached(timeout=15) # 15 seconds cache
+@app.route('/flask/list', methods=['POST'])
 def getProcessos():           
     """get list of processos from database"""
+    sort = request.json.get('sorted')    
     # could implement lazy load for updating only the dados part after 
     # but 1s delay is not a problem
-    processos = {} 
+    processos = [] 
     for process_name in wf.currentProcessGet():    
         process = ProcessManager[process_name]
         if process:
             dados = process.dados
         else: # None - not found
             dados = {} # return empty dictionary 
-        processos.update({process_name : dados})  
+        processos.append({ 'name' : process_name, 'data' : dados})  
+
+    if sort:        
+        print(f'sort {sort}', file=sys.stderr)
+        match sort:            
+            case 'error':                
+                processos = sorted(processos, key=lambda item: 
+                    item['data']['prework']['error'] if 'error' in item['data']['prework'] else '')
+            case 'type':
+                processos = sorted(processos, key=lambda item: 
+                    item['data']['tipo'] if 'tipo' in item['data'] else '')
+            case 'name':
+                processos = sorted(processos, key=lambda item: 
+                    item['name'] if 'name' in item else '', reverse=True)
     return { 
             'processos' : processos,
             'status'    : { 
@@ -200,7 +210,8 @@ def updatedb(name, data, what='eventview', save=False):
         elif 'eventview' in what:
             estudo['states'].update({'eventview' : data })    
         # add or update ['estudo'] fields key  
-        ProcessManager[name].update({'estudo' : estudo})     
+        ProcessManager[name].update({'estudo' : estudo})  
+
 
 @app.route('/flask/update_checkbox', methods=['POST'])
 def update_checkbox():
@@ -209,6 +220,7 @@ def update_checkbox():
     updatedb(payload['name'], payload['data'], 'checkboxes')    
     return Response(status=204)     
 
+
 @app.route('/flask/update_eventview', methods=['POST'])
 def update_collapse():
     payload = request.get_json()  
@@ -216,26 +228,22 @@ def update_collapse():
     updatedb(payload['name'], payload['data'], 'eventview')     
     return Response(status=204)
 
-from bs4 import BeautifulSoup as soup 
-
 
 #like /flask/redo?process=830.691/2023
-@app.route('/flask/redo', methods=['GET'])
+@app.route('/flask/redo', methods=['POST'])
 def redo():
-    """to implement still redo interferência"""
-    name = request.args.get('process')      
-    process = ProcessManager[name]
-    # dados = process.dados
+    """redo interferência"""
+    name = request.json.get('process')    
+    process = ProcessManager[name]    
+    dados = process.dados
     # if 'estudo' in dados:
-    #     estudo = dados['estudo']
-    #     if estudo['type'] == 'interferencia':
-    #         estudos.Interferencia.make(wPageNtlm(anm_user, anm_passwd), name)
-    #     anm_user, anm_passwd = config['anm_user'], config['anm_passwd']        
-    # if process is None: # for safety reasons (never overwrite)
-    #     print(f'downloading process {name}', file=sys.stderr)      
-    #     anm_user, anm_passwd = config['anm_user'], config['anm_passwd']        
-    #     process = ProcessManager.GetorCreate(name, wpagentlm=wPageNtlm(anm_user, anm_passwd))
+    #     estudo = dados['estudo']          
+    #     # if estudo['type'] == 'interferencia':
+    print(f'remaking process {name}', file=sys.stderr)      
+    anm_user, anm_passwd = config['anm_user'], config['anm_passwd']
+    estudos.Interferencia.make(wPageNtlm(anm_user, anm_passwd), name)
     return process.dados
+
 
 #like /flask/download?process=830.691/2023
 @app.route('/flask/download', methods=['GET'])

@@ -6,91 +6,113 @@ import './index.css';
 import './loader.css';
 
 function ProcessRow({name, dados, setLoading}) {
-  const [pdados, setPDados] = useState([]);
+  // const [dados, setDados] = useState([]);
 
-  useEffect(() => {
-    setPDados(dados);    
-  }, []); // will run only once
+  // useEffect(() => {
+  //   setDados(dados);    
+  // }, []); // will run only once
 
-  function download(){
+  // function download(){
+  //   setLoading(true);
+  //   // fast can be 'true' or 'false'
+  //   fetch(`/flask/download?process=${name}`)
+  //   .then(res => res.json()
+  //   .then(data => {
+  //     setPDados(data); // set and wait    
+  //     // a refresh... ok for now
+  //   }))
+  //   .catch((error) => {      
+  //     console.info(`Error on downloading process request ${error}`);
+  //   }); 
+  //   setLoading(false);
+  // }
+
+  function redo(){
     setLoading(true);
-    // fast can be 'true' or 'false'
-    fetch(`/flask/download?process=${name}`)
-    .then(res => res.json()
-    .then(data => {
-      setPDados(data); // set and wait    
-      // a refresh... ok for now
+    fetch('/flask/redo',
+      {
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json'},        
+        body: JSON.stringify({process : name}),
+      }
+    ).then(res => res.json()
+    .then(data => {      
+      console.info("remake done");
     }))
     .catch((error) => {      
       console.info(`Error on downloading process request ${error}`);
-    }); 
+    });    
     setLoading(false);
   }
 
-  function preworkStatus(dados){
-    if(dados.hasOwnProperty('prework') && dados.prework.status == 'error')
-      return <>{dados.prework.error}</>;
-    return <></>;
-  }
+  if(dados == undefined)
+    return (<><td></td></>)
 
+  let preworkstatus = (dados.hasOwnProperty('prework') 
+                        && dados.prework.status == 'error') ? 
+                        <>{dados.prework.error}</> :  
+                        <></>;
   let hasEstudo = dados.hasOwnProperty('estudo');
-  let hasDados = Object.keys(pdados).length > 0;
+  let hasDados = Object.keys(dados).length > 0;
 
   return (
-    <>
-      {estudoStatus(pdados)}   
-      { hasEstudo
+    <>      
+      <td>{estudoStatus(dados)}</td>   
+      <td>
+        { hasEstudo
         ? <Link to={`/table/${ name.replace('/', '-') }`} > {name} </Link>
         : <a>{name}</a>
-      }      
-      <div><img src="https://sei.anm.gov.br/imagens/sei_logo_azul_celeste.jpg" width="25"></img></div>
-      <div><button className="copyprocess" onClick={() => clipboardCopy(pdados['NUP'])} > { pdados['NUP'] }</button> </div>
-      { hasDados 
-        ? <Link className="SCM" to={`/scm_page/${ name.replace('/', '-') }`} > 📁 </Link> 
-        : <a className="SCM" > 📁 </a> 
-      }      
-      { hasDados
-        ? <Link className="Poligonal" to={`/polygon_page/${ name.replace('/', '-') }`} > ▱ </Link>           
-        : <a className="Poligonal" > ▱ </a>    
-      }
-      {pdados['tipo']}                    
-      <Button style='danger' onClick={()=> download()} children={'🛠redo'}/>
-      <div className='errorStatus'>{preworkStatus(pdados)}</div>
+        }
+      </td>
+      <td>        
+        <button className="copyprocess" onClick={() => clipboardCopy(dados['NUP'])} > { dados['NUP'] }</button> 
+      </td>      
+      <td>
+        { hasDados 
+          ? <Link className="SCM" to={`/scm_page/${ name.replace('/', '-') }`} > 📁 </Link> 
+          : <a className="SCM" > 📁 </a> 
+        }   
+      </td>   
+      <td>
+        { hasDados
+          ? <Link className="Poligonal" to={`/polygon_page/${ name.replace('/', '-') }`} > ▱ </Link>           
+          : <a className="Poligonal" > ▱ </a>    
+        }
+      </td>
+      <td>
+      {dados['tipo']}                    
+      </td>
+      <td> <Button style='danger' onClick={()=> redo()} children={<span>⟲</span> }/> </td> 
+      <td>
+        <div className='errorStatus'>{preworkstatus}</div>
+      </td>
     </> 
   )   
 }
 
-function ProcessRows({processos, setLoading}) {    
-  const rows = []; // assemly an array of ProcessRow's
-    for(const [key, value] of Object.entries(processos)){
-      rows.push(
-        // react needs a 'key' property for each list item
-        <li key={key}>            
-            <div className="flexcontainer">
-              <ProcessRow name={key} dados={value} setLoading={setLoading} />          
-            </div>
-        </li>);
-    }
-  return (<>{rows}</>)  
-}
-
 
 function PickProcess(){
-  const [data, setData] = useState([]);
-  const [processos, setProcessos] = useState({});
+  const [info, setInfo] = useState({});
+  const [processos, setProcessos] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [sort, setSort] = useState('')
 
-  function fetchData(){
-    // fast can be 'true' or 'false'
-    fetch(`/flask/list`)
+  function fetchData(sorted=''){    
+    sorted = (sort!=sorted)? sorted: '';    
+    fetch(`/flask/list`, { 
+      method: "POST", 
+      headers: {'Content-Type': 'application/json'},     
+      body: JSON.stringify({ 'sorted' : sorted })
+    })
     .then(res => res.json()
     .then(data => {
-      setData(data.status);
+      setInfo(data.status);
       setProcessos(data.processos);          
     }))
     .catch((error) => {      
-      console.info(`Error on PickProcess request ${error}`);
+      console.info(`Error on fetchData ${error}`);
     });      
+    setSort(sorted);
   }
 
   // function setLoading(value){
@@ -110,19 +132,45 @@ function PickProcess(){
     setLoading(false);
   }, []); // will run only once
 
+  useEffect(() => {
+  }, [sort])
+
   // if (processos.length == 0) { // conditional rendering otherwise `processos` undefined
   //   return <div>Loading...</div>;
   // } 
 
+  let hasDados = (processos)? true: false;
+
   return (
     <div className='selectProcess'>      
-      <h2>Select a process</h2>      
-      <ol>                                      
-        <ProcessRows processos={processos} setLoading={setLoading}/>           
-      </ol>      
-      <div>Working folder: {data.workfolder}</div>
+      <table className='Processes'>
+        <thead>
+          <tr>
+            <th>-</th>
+            <th><Button onClick={() => fetchData('name')}>Name</Button></th>
+            <th><img src="https://sei.anm.gov.br/imagens/sei_logo_azul_celeste.jpg" width="25"></img></th>
+            <th>SCM</th>
+            <th>Polygon</th>
+            <th><Button onClick={() => fetchData('type')}>type</Button></th>
+            <th>redo</th>
+            <th><Button onClick={() => fetchData('error')}>error</Button></th>
+          </tr>  
+        </thead>
+        <tbody>
+          { hasDados &&
+          processos.map((item, index) => {
+              let [name_, attrs] = [item.name, item.data]; // { 'name' : 'xxx.xxx/xxxx', 'data' : {...}}
+              // react needs a 'key' property for each list item
+              return <tr key={index}> 
+                      <ProcessRow name={name_} dados={attrs} setLoading={setLoading} /> 
+                     </tr>;
+          })
+          }  
+        </tbody>          
+      </table>    
+      <div>Working folder: {info.workfolder}</div>
     </div> 
-  )    
+  )   
 
 } 
 

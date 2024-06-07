@@ -8,8 +8,8 @@ html {
 /* <!-- https://css-tricks.com/snippets/css/a-guide-to-flexbox/ --> */
 
 div.errorStatus {
-  font-weight:lighter;  
-  color: red;
+  font-weight:lighter;    
+  color: black;
   font-family: Tahoma;
 }
 
@@ -112,6 +112,11 @@ button.copyprocess:active {
 .prioridade #graph.ok { 
   font-weight: bolder; 
   color: blue;
+}
+
+table.processes th,
+table.processes td {
+  text-align: center;
 }
 
 
