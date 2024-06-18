@@ -4,6 +4,7 @@ import PickProcess from "./picker.js";
 import TableAnalysis from "./table.js";
 import Scm from "./scm.js";
 import Polygon from "./polygon.js";
+import Graph from "./graph.js";
 
 
 export default function App() {
@@ -15,6 +16,7 @@ export default function App() {
           <Route path="/table/:name" element={ <TableAnalysis/> } />                 
           <Route path="/scm_page/:name" element={ <Scm/> } />  
           <Route path="/polygon_page/:name" element={ <Polygon/> } />
+          <Route path="/graph/:name" element={ <Graph/>} />
        </Routes>       
     </BrowserRouter>
   );

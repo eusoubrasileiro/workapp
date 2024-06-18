@@ -36,7 +36,8 @@ from aidbag.anm.careas import (
 from aidbag.anm.careas import workflows as wf 
 from aidbag.anm.careas.scm import (
     ProcessManager,
-    pud
+    pud,
+    ancestry
     )
 from aidbag.anm.careas.estudos.interferencia import (
         Interferencia, 
@@ -142,6 +143,8 @@ def startTableAnalysis():
     # make the payload data for javascript   
     jsdata = copy.deepcopy(dbdata) 
     jsdata['prioridade'] = dbdata['prioridade'].strftime("%d/%m/%Y %H:%M:%S") # better date/view format    
+    if 'prioridadec' in dbdata:
+        jsdata['prioridadec'] = dbdata['prioridadec'].strftime("%d/%m/%Y %H:%M:%S") # better date/view format 
     if table_pd is not None:      
         # those are payload data dont mistake it with the real dados dict saved on database                
         tabledata = uiTableData(table_pd)
@@ -190,7 +193,7 @@ def getProcessos():
                     item['data']['tipo'] if 'tipo' in item['data'] else '')
             case 'name':
                 processos = sorted(processos, key=lambda item: 
-                    item['name'] if 'name' in item else '', reverse=True)
+                    pud(item['name']).unumber if 'name' in item else '', reverse=True)
     return { 
             'processos' : processos,
             'status'    : { 
@@ -284,6 +287,21 @@ def poly_page():
     sp = soup(html_content, "html.parser")
     res = sp.select('body form div table table:nth-child(3)')[0]    
     return str(res)
+
+# like /graph?process=830.691/2023
+@app.route('/flask/graph', methods=['GET'])
+def graph():
+    name =  request.args.get('process')
+    print(f'process is {name}', file=sys.stderr)
+    process = ProcessManager[name]    
+    if process is not None:
+        dados = process.dados
+        if 'associados' in dados and 'graph' in dados['associados']:
+            buffer = ancestry.plotDirectGraphAssociados(
+                    ancestry.pGraph(process['associados']['graph']),
+                    False)
+            response = Response(buffer.getvalue(), mimetype='image/png')  # Adjust mimetype as needed
+            return response
 
 #
 # routines used by the `css_js_inject` chrome extension helper injection tool

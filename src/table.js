@@ -257,8 +257,6 @@ function TableAnalysis() {
     analyze_table = <IeTable studyname={fmtdname} estudo={process.estudo}/>
 
 
-
-
   return (
     <>
     <div className="tablecontainer">
@@ -267,6 +265,7 @@ function TableAnalysis() {
         { Prioridade(process) }        
         <Link className="SCM" to={`/scm_page/${ name.replace('/', '-') }`} > 📁 </Link>  
         <Link className="Poligonal" to={`/polygon_page/${ name.replace('/', '-') }`} > ▱ </Link>
+        <Link className="Graph" to={`/graph/${ name.replace('/', '-') }`} > ☍ </Link>
         <button className="copyprocess" onClick={() => clipboardCopy(process.NUP)} > { process.NUP }</button>
           <div> 
             <a>1<sup>st</sup> parent: 
