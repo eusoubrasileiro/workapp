@@ -5,7 +5,7 @@ import { clipboardCopy, Button, estudoStatus } from './utils';
 import './index.css';
 import './loader.css';
 
-function ProcessRow({name, dados, setLoading}) {
+function ProcessRow({index, name, dados, setLoading}) {
   // const [dados, setDados] = useState([]);
 
   // useEffect(() => {
@@ -54,9 +54,10 @@ function ProcessRow({name, dados, setLoading}) {
                         <></>;
   let hasEstudo = dados.hasOwnProperty('estudo');
   let hasDados = Object.keys(dados).length > 0;
-
+  
   return (
     <>      
+      <td>{index+1}</td> 
       <td>{estudoStatus(dados)}</td>   
       <td>
         { hasEstudo
@@ -146,7 +147,8 @@ function PickProcess(){
       <table className='Processes'>
         <thead>
           <tr>
-            <th>-</th>
+            <th>  </th>
+            <th>  </th>
             <th><Button onClick={() => fetchData('name')}>Name</Button></th>
             <th><img src="https://sei.anm.gov.br/imagens/sei_logo_azul_celeste.jpg" width="25"></img></th>
             <th>SCM</th>
@@ -162,7 +164,7 @@ function PickProcess(){
               let [name_, attrs] = [item.name, item.data]; // { 'name' : 'xxx.xxx/xxxx', 'data' : {...}}
               // react needs a 'key' property for each list item
               return <tr key={index}> 
-                      <ProcessRow name={name_} dados={attrs} setLoading={setLoading} /> 
+                      <ProcessRow index={index} name={name_} dados={attrs} setLoading={setLoading} /> 
                      </tr>;
           })
           }  
