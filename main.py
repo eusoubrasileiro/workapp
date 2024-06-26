@@ -137,7 +137,7 @@ def startTableAnalysis():
         try:
             print(f"{dbdata['NUP']} Not using database json! Loading from legacy excel table.", file=sys.stderr)
             estudo = Interferencia.from_excel(wf.ProcessPathStorage[name])        
-            table_pd = prettyTabelaExcel(estudo.tabela_interf_master, view=False)
+            table_pd = prettyTableStr(estudo.tabela_interf_master, view=False)
         except RuntimeError:
             table_pd = None    
     # make the payload data for javascript   
@@ -296,12 +296,15 @@ def graph():
     process = ProcessManager[name]    
     if process is not None:
         dados = process.dados
-        if 'associados' in dados and 'graph' in dados['associados']:
+        if('associados' in dados and 
+           'graph' in dados['associados'] and 
+            dados['associados']['graph']): # not empty
             buffer = ancestry.plotDirectGraphAssociados(
                     ancestry.pGraph(process['associados']['graph']),
                     False)
-            response = Response(buffer.getvalue(), mimetype='image/png')  # Adjust mimetype as needed
-            return response
+            return  Response(buffer.getvalue(), 
+                            mimetype='image/png')  # Adjust mimetype as needed
+    return Response(status=204)
 
 #
 # routines used by the `css_js_inject` chrome extension helper injection tool
