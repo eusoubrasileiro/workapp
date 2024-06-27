@@ -54,10 +54,23 @@ function ProcessRow({index, name, dados, setLoading}) {
                         <></>;
   let hasEstudo = dados.hasOwnProperty('estudo');
   let hasDados = Object.keys(dados).length > 0;
+
+  let isPublished = false;
+  if(dados.hasOwnProperty('work') && 
+    dados.work.hasOwnProperty('published') &&
+    dados.work.published){
+    isPublished = true;
+  }
   
   return (
     <>      
-      <td>{index+1}</td> 
+      <td>{index+1}</td>
+      <td>
+        { isPublished 
+        ? '⬆'        
+        : '⁃'
+        }
+      </td>
       <td>{estudoStatus(dados)}</td>   
       <td>
         { hasEstudo
@@ -148,6 +161,7 @@ function PickProcess(){
         <thead>
           <tr>
             <th>  </th>
+            <th><img src="https://sei.anm.gov.br/imagens/sei_logo_azul_celeste.jpg" width="25"></img></th>
             <th>  </th>
             <th><Button onClick={() => fetchData('name')}>Name</Button></th>
             <th><img src="https://sei.anm.gov.br/imagens/sei_logo_azul_celeste.jpg" width="25"></img></th>
