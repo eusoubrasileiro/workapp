@@ -49,18 +49,24 @@ function ProcessRow({index, name, dados, setLoading}) {
     return (<><td></td></>)
 
   let preworkstatus = (dados.hasOwnProperty('prework') 
-                        && dados.prework.status == 'error') ? 
-                        <>{dados.prework.error}</> :  
+                        && dados.prework.status != 'ok') ? 
+                        <>{dados.prework.status.error}</> :  
                         <></>;
   let hasEstudo = dados.hasOwnProperty('estudo');
   let hasDados = Object.keys(dados).length > 0;
+  let hasGraph = (dados.hasOwnProperty('associados') 
+                  && Object.keys(dados.associados.graph).length > 0)
 
   let isPublished = false;
+
   if(dados.hasOwnProperty('work') && 
     dados.work.hasOwnProperty('published') &&
     dados.work.published){
     isPublished = true;
   }
+
+  let nup = dados.hasOwnProperty('NUP') ? dados['NUP']  : '';
+  let tipo = dados.hasOwnProperty('tipo') ? dados['tipo'] : '';
   
   return (
     <>      
@@ -79,7 +85,7 @@ function ProcessRow({index, name, dados, setLoading}) {
         }
       </td>
       <td>        
-        <button className="copyprocess" onClick={() => clipboardCopy(dados['NUP'])} > { dados['NUP'] }</button> 
+        <button className="copyprocess" onClick={() => clipboardCopy(nup)} > { nup }</button> 
       </td>      
       <td>
         { hasDados 
@@ -94,7 +100,14 @@ function ProcessRow({index, name, dados, setLoading}) {
         }
       </td>
       <td>
-      {dados['tipo']}                    
+        {
+         hasGraph 
+         ? <Link className="Graph" to={`/graph/${ name.replace('/', '-') }`} > ☍ </Link>
+         :  <a className="Graph" > ☍ </a> 
+        }
+      </td>
+      <td>
+      {tipo}                    
       </td>
       <td> <Button style='danger' onClick={()=> redo()} children={<span>⟲</span> }/> </td> 
       <td>
@@ -167,6 +180,7 @@ function PickProcess(){
             <th><img src="https://sei.anm.gov.br/imagens/sei_logo_azul_celeste.jpg" width="25"></img></th>
             <th>SCM</th>
             <th>Polygon</th>
+            <th>Graph</th>
             <th><Button onClick={() => fetchData('type')}>type</Button></th>
             <th>redo</th>
             <th><Button onClick={() => fetchData('error')}>error</Button></th>
