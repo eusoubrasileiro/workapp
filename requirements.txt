@@ -1,6 +1,6 @@
-beautifulsoup4==4.12.3
-Flask==3.0.3
-flask_caching==2.3.0
-flask_cors==4.0.1
-flask_session==0.8.0
-pandas==2.2.2
+beautifulsoup4
+Flask
+flask_caching
+flask_cors
+flask_session
+pandas

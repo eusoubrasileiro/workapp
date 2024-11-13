@@ -238,10 +238,11 @@ def redo():
     """redo interferência"""
     name = request.json.get('process')    
     process = ProcessManager[name]    
-    dados = process.dados
-    # if 'estudo' in dados:
-    #     estudo = dados['estudo']          
-    #     # if estudo['type'] == 'interferencia':
+    if process is not None:
+        dados = process.dados
+        # if 'estudo' in dados:
+        #     estudo = dados['estudo']          
+        #     # if estudo['type'] == 'interferencia':
     print(f'remaking process {name}', file=sys.stderr)      
     anm_user, anm_passwd = config['anm_user'], config['anm_passwd']
     estudos.Interferencia.make(wPageNtlm(anm_user, anm_passwd), name)
