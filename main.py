@@ -245,7 +245,7 @@ def redo():
         #     # if estudo['type'] == 'interferencia':
     print(f'remaking process {name}', file=sys.stderr)      
     anm_user, anm_passwd = config['anm_user'], config['anm_passwd']
-    estudos.Interferencia.make(wPageNtlm(anm_user, anm_passwd), name)
+    estudos.Interferencia.make(wPageNtlm(anm_user, anm_passwd), name, overwrite=True)
     return process.dados
 
 
