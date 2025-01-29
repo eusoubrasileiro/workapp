@@ -6,11 +6,8 @@ python -m workapp.main
 or to run on background
 nohup python -m workapp.main
 """
-import sys, pathlib, shutil, os 
-import threading
-import time
+import sys, pathlib, os 
 import pandas as pd 
-import argparse
 import datetime
 import copy
 from io import BytesIO
@@ -22,9 +19,9 @@ from flask import (
         Flask, 
         request, 
         Response,
-        send_from_directory,
-        session
     )
+
+from requests import HTTPError
 
 from aidbag.general import pdf
 from aidbag.anm.careas import (
@@ -348,9 +345,16 @@ def estudo_finish():
     if keyfound:
         dados = process.dados
     number, year = pud(key).numberyear
+    # used from env. variables
     anm_user, anm_passwd = config['anm_user'], config['anm_passwd']    
-    wp = wPageNtlm(anm_user, anm_passwd, ssl=True)        
-    url = f"http://sigareas.dnpm.gov.br/Paginas/Usuario/Imprimir.aspx?estudo={enumber}&tipo=RELATORIO&numero={number}&ano={year}"    
+    try:
+        wp = wPageNtlm(anm_user, anm_passwd, ssl=True)        
+        url = f"http://sigareas.dnpm.gov.br/Paginas/Usuario/Imprimir.aspx?estudo={enumber}&tipo=RELATORIO&numero={number}&ano={year}"    
+    except HTTPError as http_err:
+        if wp.response.status_code == 401:
+            print("Password Error! Please check your user and password envionment variables!", file=sys.stderr)
+        else:
+            raise http_err
     cookie = request.json.get('cookieData')    
     file = wp.get(url, cookies=cookie, verify=False)
     path = (pathlib.Path(processPath(key)) / 
