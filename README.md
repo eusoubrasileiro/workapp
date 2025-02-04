@@ -1,32 +1,94 @@
-### Flask app to analyse interferencia table 
+# WorkApp
 
-Saves 'prioridade' results direct from browser to sqlite database. Uses `css_js_inject` scripts to save information from sigareas estudo real-time on database. 
+**WorkApp** is a Flask-React application designed to analyze the "interferência" table using data collected (web scraping) from the Brazilian National Agency of Mining (ANM). This application relies on data initially gathered by the [aidbag](https://github.com/eusoubrasileiro/aidbag/tree/master/anm) web scraping system. The web scraping process is completed first, creating a folder for each 'Processo' and populating a local SQLite database with the scraped data.
 
-Run from `~/Projects` 
+## Features
 
-```python -m workapp.run```
+The application offers two main interfaces:
 
-or to run on background
+1. **Web Application**: Runs locally and displays all web-scraped process information. Upon interactive work it saves the results of the "interferência" table analysis into a SQLite database.
 
-```nohup python -m workapp.run```
+#### Process Selection and Status Overview
+
+![Process Selection and Status Overview](https://github.com/user-attachments/assets/2d0fcf55-1e1c-4cc1-bf8e-e6ef30cc6dae)
+
+#### Interferência Table Analysis
+
+![Interferência Table Analysis](https://github.com/user-attachments/assets/69059cb5-0026-41cc-8b13-82e93d915e2b)
+
+2. **Chrome Extension**: Injects JavaScript into the ANM's "interferência" analysis system. This script reads data from the system and posts back to the backend, saving PDFs and updating process statuses and information in the database.
+
+   A simple image example of the chrom extension interface running:
+   
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/b308fccb-0742-4f98-99ca-af23ecc85a71" />
+</p>
+
+The app saves 'prioridade' results directly from the browser to the SQLite database and utilizes `css_js_inject` scripts to save information from SIGAREAS estudo in real-time.
+
+## Installation
+
+1. **Clone the Repository**:
+
+   ```bash
+   git clone https://github.com/eusoubrasileiro/workapp.git
+   cd workapp
+   ```
+
+2. **Install Backend Dependencies**:
+
+   Ensure you have Python installed. It's recommended to use a virtual environment.
+
+   ```bash
+   python3 -m venv venv
+   source venv/bin/activate
+   pip install -r requirements.txt
+   ```
+
+3. **Install Frontend Dependencies**:
+
+   Ensure you have Node.js and npm installed.
+
+   ```bash
+   npm install
+   ```
+
+## Usage
+
+### Running the Application
+
+To start the backend server, run:
+
+```bash
+python -m workapp.run
+```
+
+To run the server in the background:
+
+```bash
+nohup python -m workapp.run &
+```
 
 ### Frontend
 
-To build the react bundle on the `workapp` git repository folder run
+To build the React frontend, execute:
 
-`npm run build`
+```bash
+npm run build
+```
 
-That'll create the `build` folder (here) used by main.py 
+This will create a `build` folder used by `main.py`.
 
 ### Development
 
-You must run the backend and then the frontend with nodejs:
+For development purposes, run the backend in development mode:
 
-```python -m workapp.run -d```
+```bash
+python -m workapp.run -d
+```
 
-then 
+Then, start the frontend:
 
-```npm start```
-
-
-
+```bash
+npm start
+```
