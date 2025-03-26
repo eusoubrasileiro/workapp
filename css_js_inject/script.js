@@ -26,7 +26,7 @@ const header_html = `
   </div>
 `;
 var process_name = '';
-var mainpage = document.querySelector('#ctl00_cphConteudo_lblTitulo') == null;
+var isMainPage = document.querySelector("span[class='ant-page-header-heading-title selectorgadget_selected'][title='Página Inicial']") != null;
 
 const estudos_validos = ['1', '8', '21']; // interf, opçao, m. regime com redução
 // to make sure we are at r. interferencia page not estudo=1 or estudo=8
@@ -38,7 +38,7 @@ try{
 catch{
   estudo_number = '$$$';  
 }
-console.log('Is this mainpage:', mainpage);
+console.log('Is this mainpage:', isMainPage);
 console.log('Estudo number', estudo_number);
 
 document.querySelector("body").insertAdjacentHTML("afterbegin", header_html);
@@ -123,13 +123,13 @@ function finished(){
 
 
 
-if(estudos_validos.includes(estudo_number) && !mainpage) 
+if(estudos_validos.includes(estudo_number) && !isMainPage) 
   $( document ).ready(function() {
 
     process_name = getmainprocess();
-    mainpage = (process_name == '')? true: false;    
+    isMainPage = (process_name == '')? true: false;    
 
-    if(!mainpage){
+    if(!isMainPage){
       var $checkboxes = $("table#ctl00_cphConteudo_gvLowerRight tbody tr td input[type='checkbox']");
       var total = $checkboxes.length;
       $('#count-checkboxes').text(total);    

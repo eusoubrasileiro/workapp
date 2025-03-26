@@ -62,11 +62,14 @@ Session(app)
 # routes for development or production
 if os.environ.get('APP_ENV') == 'production':
     # Serving 'production' React App from here flask
-    # it's already using the /build as static folder (above!)
+    # Update static folder path to point to the new build location
+    frontend_build_path = pathlib.Path(__file__).parent.parent / 'frontend' / 'build'
+    app.static_folder = str(frontend_build_path)
+    
     @app.errorhandler(404) # pages not found direct to react/index.html/javascript bundle
     @app.route('/')
     def index(e=None):
-        return app.send_static_file("index.html")
+        return app.send_static_file('index.html')
 
     @app.route('/<path:path>')
     def static_proxy(path):
