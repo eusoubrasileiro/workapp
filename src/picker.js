@@ -1,7 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useState, useEffect} from 'react';
-import { clipboardCopy, Button, estudoStatus } from './utils';
+import { clipboardCopy, Button } from './utils';
+import { EstudoStatusButton } from './status';
 import './index.css';
 import './loader.css';
 
@@ -77,7 +78,7 @@ function ProcessRow({index, name, dados, setLoading}) {
         : '⁃'
         }
       </td>
-      <td>{estudoStatus(dados)}</td>   
+      <td><EstudoStatusButton name={name} dados={dados} /></td>   
       <td>
         { hasEstudo
         ? <Link to={`/table/${ name.replace('/', '-') }`} > {name} </Link>

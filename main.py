@@ -329,6 +329,22 @@ def get_prioridade():
     print(f'js_inject process is {key} did not find checkboxes states. \n TODO implement Opção/Table checkbox', file=sys.stderr)
     return {}
 
+@app.route('/flask/update_estudo_status', methods=['POST'])
+def update_estudo_status():
+    """update estudo status on database"""
+    key = request.json.get('process')
+    done = request.json.get('done')
+    print(f'update_estudo_status {key} {done}', file=sys.stderr)
+    process = ProcessManager[key] 
+    if process is None:
+        return Response(status=404)
+    dados = process.dados
+    if 'estudo' in dados:
+        dados['estudo']['done'] = request.json.get('done')
+        process.update(dados)
+    return Response(status=204)
+
+
 @app.route('/flask/estudo_finish', methods=['POST'])  
 def estudo_finish():
     """

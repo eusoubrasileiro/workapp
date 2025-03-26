@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { clipboardCopy, estudoStatus } from './utils';
+import { clipboardCopy } from './utils';
+import { EstudoStatusButton } from './status';
 import { Link } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 import { Tooltip } from 'react-tooltip'
@@ -273,7 +274,7 @@ function TableAnalysis() {
             </a> 
           </div> 
         <div>
-          {estudoStatus(process)}
+          <EstudoStatusButton name={fmtdname} dados={process} />
         </div>              
       </div>        
       {analyze_table}

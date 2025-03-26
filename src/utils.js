@@ -1,4 +1,3 @@
-
 const Button = ({ onClick, children, style='simple'}) => {
     const buttonStyle = {
         'color': 'white',
@@ -19,16 +18,6 @@ const Button = ({ onClick, children, style='simple'}) => {
     );
   };
 
-  function estudoStatus(dados) {
-    if (dados.hasOwnProperty('estudo'))
-        if (dados.estudo.done)
-            return <a>✅</a>
-        else
-            return <a>⬜</a>  
-    else
-        return <a>⛔</a>
-  }
-  
 function clipboardCopy(text) {
 
     function showAlert(message, duration) {
@@ -70,4 +59,4 @@ function clipboardCopy(text) {
         });
 }
 
-export { estudoStatus, clipboardCopy, Button };
+export { clipboardCopy, Button };
