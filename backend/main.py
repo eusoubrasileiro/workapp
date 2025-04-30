@@ -8,11 +8,8 @@ nohup python -m workapp.main
 """
 import sys, pathlib, os 
 import pandas as pd 
-import datetime
 import copy
-from io import BytesIO
 from bs4 import BeautifulSoup as soup 
-
 from flask_session import Session
 from flask_cors import CORS
 from flask import (
@@ -21,19 +18,20 @@ from flask import (
         Response,
     )
 
-from requests import HTTPError
-
-from aidbag.general import pdf
 from aidbag.anm.careas import (
     config, 
     processPath, 
     wPageNtlm,
     estudos
     )
-from aidbag.anm.careas import workflows as wf 
+from aidbag.anm.careas.workflows import (
+    work,
+    ProcessPathStorage,
+    currentProcessGet
+)
+from aidbag.anm.uid import Pud
 from aidbag.anm.careas.scm import (
     ProcessManager,
-    pud,
     ancestry
     )
 from aidbag.anm.careas.estudos.interferencia import (
@@ -136,7 +134,7 @@ def startTableAnalysis():
     else: # from legacy excel   
         try:
             print(f"{dbdata['NUP']} Not using database json! Loading from legacy excel table.", file=sys.stderr)
-            estudo = Interferencia.from_excel(wf.ProcessPathStorage[name])        
+            estudo = Interferencia.from_excel(ProcessPathStorage[name])        
             table_pd = prettyTableStr(estudo.tabela_interf_master, view=False)
         except RuntimeError:
             table_pd = None    
@@ -174,7 +172,7 @@ def getProcessos():
     # could implement lazy load for updating only the dados part after 
     # but 1s delay is not a problem
     processos = [] 
-    for process_name in wf.currentProcessGet():    
+    for process_name in currentProcessGet():    
         process = ProcessManager[process_name]
         if process:
             dados = process.dados
@@ -193,7 +191,7 @@ def getProcessos():
                     item['data']['tipo'] if 'tipo' in item['data'] else '')
             case 'name':
                 processos = sorted(processos, key=lambda item: 
-                    pud(item['name']).unumber if 'name' in item else '', reverse=True)
+                    Pud.parse(item['name']).unumber if 'name' in item else '', reverse=True)
     return { 
             'processos' : processos,
             'status'    : { 
@@ -243,9 +241,8 @@ def redo():
         # if 'estudo' in dados:
         #     estudo = dados['estudo']          
         #     # if estudo['type'] == 'interferencia':
-    print(f'remaking process {name}', file=sys.stderr)      
-    anm_user, anm_passwd = config['anm_user'], config['anm_passwd']
-    estudos.Interferencia.make(wPageNtlm(anm_user, anm_passwd), name, overwrite=True)
+    print(f'remaking process {name}', file=sys.stderr)          
+    estudos.Interferencia.make(name, wPageNtlm(**config['credentials']['anm']), overwrite=True)
     return process.dados
 
 
@@ -256,8 +253,7 @@ def download():
     process = ProcessManager[name]
     if process is None: # for safety reasons (never overwrite)
         print(f'downloading process {name}', file=sys.stderr)      
-        anm_user, anm_passwd = config['anm_user'], config['anm_passwd']        
-        process = ProcessManager.GetorCreate(name, wpagentlm=wPageNtlm(anm_user, anm_passwd))
+        process = ProcessManager.GetorCreate(name, wpagentlm=wPageNtlm(**config['credentials']['anm']))
     return process.dados
 
 
@@ -308,28 +304,25 @@ def graph():
     return Response(status=204)
 
 #
-# routines used by the `css_js_inject` chrome extension helper injection tool
+# routines used by the `chrome extension` sigareas-helper 
 #
 
 @app.route('/flask/get_prioridade', methods=['GET'])  # like /get_prioridade?process=830.691/2023
 def get_prioridade():
-    """return list (without dot on name) of interferentes with process if checked-market or not
-    for use on css_js_inject tool"""
+    """return list (without dot on name) of interferentes with process if checked-market or not for use on chrome extension"""
     key = request.args.get('process')    
-    print(f'js_inject process is {key}', file=sys.stderr)
-    dados = ProcessManager[key].dados
-    if ('estudo' in dados and 
-        'states' in dados['estudo'] and 
-        'checkboxes' in dados['estudo']['states']):        
-        dict_ =  dados['estudo']['states']['checkboxes'] # json estudo table 
+    print(f'chrome extension process is {key}', file=sys.stderr)
+    pobj = ProcessManager[key]
+    states =  pobj.get('estudo', 'states', 'checkboxes')     
+    if states:
         # turn in acceptable javascript format for processes - otherwise wont work 
         # here 1. no dots 2. no leading zeros 
         def fmtPnameJs(name):
-            num, year = pud(name).numberyear
+            num, year = Pud.parse(name).numberyear
             return '/'.join([str(int(num)),str(int(year))])        
-        return { fmtPnameJs(key) : value for key, value in dict_.items() } # remove dot for javascript use
+        return { fmtPnameJs(key) : value for key, value in states.items() } # remove dot for javascript use
     # return this in case opção de área
-    print(f'js_inject process is {key} did not find checkboxes states. \n TODO implement Opção/Table checkbox', file=sys.stderr)
+    print(f'chrome extension process is {key} did not find checkboxes states. \n TODO implement Opção/Table checkbox', file=sys.stderr)
     return {}
 
 @app.route('/flask/update_estudo_status', methods=['POST'])
@@ -341,65 +334,27 @@ def update_estudo_status():
     process = ProcessManager[key] 
     if process is None:
         return Response(status=404)
-    dados = process.dados
-    if 'estudo' in dados:
-        dados['estudo']['done'] = request.json.get('done')
-        process.update(dados)
+    if process.get('estudo'):
+        process.set('estudo', 'done', done)
     return Response(status=204)
 
 
 @app.route('/flask/estudo_finish', methods=['POST'])  
 def estudo_finish():
     """
-    css_js_inject helper tool
+    chrome extension helper tool
      * reports estudo finished
-     * download and saves estudo pdf on process folder
+     * moves estudo pdf to process folder
        uses config doc prefix
     """
-    key = request.json.get('process')
-    # from js estudos validos 1, 8, 21 // interf, opçao, m. regime com redução
-    enumber = request.json.get('estudo_number')  
-    process = ProcessManager[key]    
-    keyfound = True if process else False
+    print(f'estudo_finish request.json {request.json}', file=sys.stderr)
+    fullProcessName = request.json.get('fullProcessName') # NUP e.g.     
+    etype = request.json.get('estudoType')  
+    keyfound = work.estudoFinish(fullProcessName, etype)
     if keyfound:
-        dados = process.dados
-    number, year = pud(key).numberyear
-    # used from env. variables
-    anm_user, anm_passwd = config['anm_user'], config['anm_passwd']    
-    try:
-        wp = wPageNtlm(anm_user, anm_passwd, ssl=True)        
-        url = f"http://sigareas.dnpm.gov.br/Paginas/Usuario/Imprimir.aspx?estudo={enumber}&tipo=RELATORIO&numero={number}&ano={year}"    
-    except HTTPError as http_err:
-        if wp.response.status_code == 401:
-            print("Password Error! Please check your user and password envionment variables!", file=sys.stderr)
-        else:
-            raise http_err
-    cookie = request.json.get('cookieData')    
-    file = wp.get(url, cookies=cookie, verify=False)
-    path = (pathlib.Path(processPath(key)) / 
-        pathlib.Path(f"{config['sigareas']['doc_prefix']}_{number}_{year}_{enumber}.pdf"))
-    if not path.parent.exists():
-        path.parent.mkdir(parents=True)        
-    with path.open('wb') as f: 
-        f.write(file.content)   
-    if keyfound:
-        bytes_stream = BytesIO(file.content)
-        extracted_text = pdf.readPdfText(bytes_stream) # also save pdf text extract as 'sigareas_pdf' key
-        finished = {'done': True, 
-                    'time' : datetime.datetime.now(), 
-                    'sigareas': {
-                        'pdf_text' : extracted_text, 
-                        'pdf_path' : str(path.absolute()) 
-                        } 
-                    }
-        if 'estudo' in dados:
-            dados['estudo'].update(finished)  
-        else:
-            dados['estudo'] = finished
-        ProcessManager[key].update(dados)
         return Response(status=204)
     else:
-        print(f'process {key} not found - but file saved on folder', file=sys.stderr)
+        print(f'process {fullProcessName} not found - but file saved on folder', file=sys.stderr)
         return Response(status=404)
     
 

@@ -16,8 +16,7 @@ function setEstudo(name, done, callback) {
     });       
   }
   
-  // Keep the old version for backward compatibility but mark it as deprecated
-  function estudoStatus(name, dados) {
+function estudoStatus(name, dados) {
     console.warn("estudoStatus function is deprecated. Use EstudoStatusButton component instead.");
     if (dados && dados.hasOwnProperty('estudo')) {
       return (
