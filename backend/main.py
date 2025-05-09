@@ -18,9 +18,8 @@ from flask import (
         Response,
     )
 
-from aidbag.anm.careas import (
-    config, 
-    processPath, 
+from aidbag.anm.config import config
+from aidbag.anm.careas import(    
     wPageNtlm,
     estudos
     )
