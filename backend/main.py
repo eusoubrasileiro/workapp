@@ -19,10 +19,7 @@ from flask import (
     )
 
 from aidbag.anm.config import config
-from aidbag.anm.careas import(    
-    wPageNtlm,
-    estudos
-    )
+from aidbag.anm.careas import estudos
 from aidbag.anm.careas.workflows import (
     work,
     ProcessPathStorage,
@@ -241,7 +238,7 @@ def redo():
         #     estudo = dados['estudo']          
         #     # if estudo['type'] == 'interferencia':
     print(f'remaking process {name}', file=sys.stderr)          
-    estudos.Interferencia.make(name, wPageNtlm(**config['credentials']['anm']), overwrite=True)
+    estudos.Interferencia.make(name, overwrite=True)
     return process.dados
 
 
@@ -252,7 +249,7 @@ def download():
     process = ProcessManager[name]
     if process is None: # for safety reasons (never overwrite)
         print(f'downloading process {name}', file=sys.stderr)      
-        process = ProcessManager.GetorCreate(name, wpagentlm=wPageNtlm(**config['credentials']['anm']))
+        process = ProcessManager.GetorCreate(name)
     return process.dados
 
 
