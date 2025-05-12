@@ -73,7 +73,7 @@ else:
     def index():
         return "In development mode!<br> RUN `npm start` from workapp project folder"
 
-def uiTableData(table): 
+def uiTableData(table: pd.DataFrame) -> dict: 
     """
     From a pandas dataframe table create additional columns to be send as JSON.
     So the frontend in React can create the table 'UI' (user interface) and the
@@ -125,7 +125,7 @@ def startTableAnalysis():
     table_pd = None # pandas table
     # to update-add process|database start by default not done now
     if 'estudo' in dbdata:
-        if 'table' in dbdata['estudo']: # from database        
+        if 'table' in dbdata['estudo'] and dbdata['estudo']['table']: # from database        
             table_pd = pd.DataFrame.from_dict(dbdata['estudo']['table'])                
     else: # from legacy excel   
         try:
@@ -331,7 +331,7 @@ def update_estudo_status():
     if process is None:
         return Response(status=404)
     if process.get('estudo'):
-        process.set('estudo', 'done', done)
+        process.set('estudo.done', done)
     return Response(status=204)
 
 
