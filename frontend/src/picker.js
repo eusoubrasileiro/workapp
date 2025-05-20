@@ -124,6 +124,7 @@ function PickProcess(){
   const [processos, setProcessos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [sort, setSort] = useState('')
+  const [month, setMonth] = useState(new Date().toLocaleString('pt-BR', { month: 'long' }).replace(/^\w/, c => c.toUpperCase())); 
 
   function fetchData(sorted=''){    
     sorted = (sort!=sorted)? sorted: '';    
@@ -169,8 +170,9 @@ function PickProcess(){
 
   let hasDados = (processos)? true: false;
 
-  return (
+  return (    
     <div className='selectProcess'>      
+    <div className='published'>{month} Total Published {info.published}</div>    
       <table className='Processes'>
         <thead>
           <tr>
@@ -199,7 +201,7 @@ function PickProcess(){
           }  
         </tbody>          
       </table>    
-      <div>Working folder: {info.workfolder}</div>
+      <div>Working folder: {info.workfolder}</div>      
     </div> 
   )   
 

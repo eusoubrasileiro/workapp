@@ -16,6 +16,7 @@ from flask import (
         Flask, 
         request, 
         Response,
+        jsonify
     )
 
 from aidbag.anm.config import config
@@ -28,7 +29,8 @@ from aidbag.anm.careas.workflows import (
 from aidbag.anm.uid import Pud
 from aidbag.anm.careas.scm import (
     ProcessManager,
-    ancestry
+    ancestry,
+    db  
     )
 from aidbag.anm.careas.estudos.interferencia import (
         Interferencia, 
@@ -191,7 +193,8 @@ def getProcessos():
     return { 
             'processos' : processos,
             'status'    : { 
-                'workfolder' : config['processos_path']
+                'workfolder' : config['processos_path'],
+                'published'  : db.count_published_current_month()
                 }
             }
 
@@ -298,6 +301,7 @@ def graph():
             return  Response(buffer.getvalue(), 
                             mimetype='image/png')  # Adjust mimetype as needed
     return Response(status=204)
+
 
 #
 # routines used by the `chrome extension` sigareas-helper 
