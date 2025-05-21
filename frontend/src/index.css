@@ -13,9 +13,34 @@ html {
   font-size: 18px;
   font-family: Tahoma;  
   font-weight: bold;
-  background-color: bisque;
+  background-color: white;
   border-radius: 10px;
   padding: 5px;
+}
+
+
+
+.event_type {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 5px;
+  align-items: center;
+}
+
+.event_type #tipo {
+  font-size: 17px;
+  font-weight: bold;
+}
+
+.event_type #evento {
+  font-size: 14px;
+  font-weight: normal;
+}
+
+.event_type #event_count {
+  font-size: 16px;
+  font-weight: bold;
+  color: #ff0000;
 }
 
 /* main page */

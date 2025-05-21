@@ -257,22 +257,29 @@ function TableAnalysis() {
   if (process.estudo.hasOwnProperty('table'))
     analyze_table = <IeTable studyname={fmtdname} estudo={process.estudo}/>
 
+  const name_ = name.replace('/', '-');
+  const last_event = process.eventos?.[1]?.[0]; // description of last event
+  const event_count = process.eventos.length-1; // count of last event -1 header
 
   return (
     <>
     <div className="tablecontainer">
       <div className="navbarcontainer">
-        <a id='tipo'> { process.tipo }</a>
+        <div className="event_type">
+          <a id='tipo'> { process.tipo }</a>          
+          <a id='event_count'> Total: { event_count }</a> 
+          <a id='evento'> Last: { last_event }</a>          
+        </div>
         { Prioridade(process) }        
-        <Link className="SCM" to={`/scm_page/${ name.replace('/', '-') }`} > 📁 </Link>  
-        <Link className="Poligonal" to={`/polygon_page/${ name.replace('/', '-') }`} > ▱ </Link>
-        <Link className="Graph" to={`/graph/${ name.replace('/', '-') }`} > ☍ </Link>
+        <Link className="SCM" to={`/scm_page/${ name_ }`} > 📁 </Link>  
+        <Link className="Poligonal" to={`/polygon_page/${ name_ }`} > ▱ </Link>
+        <Link className="Graph" to={`/graph/${ name_ }`} > ☍ </Link>
         <button className="copyprocess" onClick={() => clipboardCopy(process.NUP)} > { process.NUP }</button>
-          <div> 
-            <a>1<sup>st</sup> parent: 
-              {parent}
-            </a> 
-          </div> 
+        <div> 
+          <a>1<sup>st</sup> parent: 
+            {parent}
+          </a> 
+        </div> 
         <div>
           <EstudoStatusButton name={fmtdname} dados={process} />
         </div>              
