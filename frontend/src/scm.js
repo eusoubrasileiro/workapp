@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { fmtProcessName } from './utils';
 
 function Scm(){
     const { name } = useParams();
-    const fmtdname = name.replace('-','/');
     const [ scmpage, setSCMpage ] = useState(null); 
   
     // /flask/scm/process?process=830.691/2023
     useEffect(() => {
-      fetch(`/flask/scm?process=${fmtdname}`) 
+      fetch(`/flask/process/${fmtProcessName(name)}/scm`) 
       .then(response => response.text())
       .then(data => {
         setSCMpage(data);

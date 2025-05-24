@@ -1,3 +1,9 @@
+function fmtProcessName(name){
+    // 830.691/2023 -> 830.691-2023
+    // pretty simple in the future we can add a real uuid for this
+    return name.replace('/', '-');
+}
+
 const Button = ({ onClick, children, style='simple'}) => {
     const buttonStyle = {
         'color': 'white',
@@ -59,4 +65,4 @@ function clipboardCopy(text) {
         });
 }
 
-export { clipboardCopy, Button };
+export { clipboardCopy, Button, fmtProcessName };

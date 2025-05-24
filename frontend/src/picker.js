@@ -5,38 +5,14 @@ import { clipboardCopy, Button } from './utils';
 import { EstudoStatusButton } from './status';
 import './index.css';
 import './loader.css';
+import { fmtProcessName } from './utils';
 
 function ProcessRow({index, name, dados, setLoading}) {
-  // const [dados, setDados] = useState([]);
-
-  // useEffect(() => {
-  //   setDados(dados);    
-  // }, []); // will run only once
-
-  // function download(){
-  //   setLoading(true);
-  //   // fast can be 'true' or 'false'
-  //   fetch(`/flask/download?process=${name}`)
-  //   .then(res => res.json()
-  //   .then(data => {
-  //     setPDados(data); // set and wait    
-  //     // a refresh... ok for now
-  //   }))
-  //   .catch((error) => {      
-  //     console.info(`Error on downloading process request ${error}`);
-  //   }); 
-  //   setLoading(false);
-  // }
 
   function redo(){
     setLoading(true);
-    fetch('/flask/redo',
-      {
-        method: 'POST', 
-        headers: { 'Content-Type': 'application/json'},        
-        body: JSON.stringify({process : name}),
-      }
-    ).then(res => res.json()
+    fetch(`/flask/process/${fmtProcessName(name)}/redo`)
+    .then(res => res.json()
     .then(data => {      
       console.info("remake done");
     }))
@@ -66,8 +42,8 @@ function ProcessRow({index, name, dados, setLoading}) {
     isPublished = true;
   }
 
-  let nup = dados.hasOwnProperty('NUP') ? dados['NUP']  : '';
-  let tipo = dados.hasOwnProperty('tipo') ? dados['tipo'] : '';
+  let nup = dados?.NUP || '';
+  let tipo = dados?.tipo || '';
   
   return (
     <>      
@@ -128,7 +104,7 @@ function PickProcess(){
 
   function fetchData(sorted=''){    
     sorted = (sort!=sorted)? sorted: '';    
-    fetch(`/flask/list`, { 
+    fetch(`/flask/work/list`, { 
       method: "POST", 
       headers: {'Content-Type': 'application/json'},     
       body: JSON.stringify({ 'sorted' : sorted })

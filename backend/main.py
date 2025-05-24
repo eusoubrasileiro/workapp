@@ -6,6 +6,7 @@ python -m workapp.main
 or to run on background
 nohup python -m workapp.main
 """
+import mimetypes
 import sys, pathlib, os 
 import pandas as pd 
 import copy
@@ -16,9 +17,8 @@ from flask import (
         Flask, 
         request, 
         Response,
-        jsonify
+        send_from_directory
     )
-
 from aidbag.anm.config import config
 from aidbag.anm.careas import estudos
 from aidbag.anm.careas.workflows import (
@@ -75,6 +75,29 @@ else:
     def index():
         return "In development mode!<br> RUN `npm start` from workapp project folder"
 
+
+@app.route("/flask/process/<process>/serve/<filename>", methods=['GET'])
+def process_serve_file(process, filename):
+    path = config['processos_path'] / process / filename
+    return send_from_directory(path)
+
+@app.route("/flask/process/<process>/files", methods=['GET'])
+def process_files(process):
+    folder = config['processos_path'] / process
+    results = []
+    for path in folder.rglob("*"):               # recursive; use .iterdir() for flat
+        rel = path.relative_to(folder).as_posix()
+        stat = path.stat()
+        results.append({
+            "path": rel,
+            "is_dir": path.is_dir(),
+            "size": stat.st_size,
+            "mtime": int(stat.st_mtime),
+            "mime": mimetypes.guess_type(path.name)[0] if path.is_file() else None,
+        })
+    return results
+    
+
 def uiTableData(table: pd.DataFrame) -> dict: 
     """
     From a pandas dataframe table create additional columns to be send as JSON.
@@ -120,10 +143,9 @@ def uiTableData(table: pd.DataFrame) -> dict:
     }
     return dictTable
 
-@app.route('/flask/analyze', methods=['POST'])
-def startTableAnalysis():
-    name = request.get_json()['name']     
-    dbdata = ProcessManager[name].dados
+@app.route('/flask/process/<process>/analyze', methods=['GET'])
+def startTableAnalysis(process):
+    dbdata = ProcessManager[process].dados
     table_pd = None # pandas table
     # to update-add process|database start by default not done now
     if 'estudo' in dbdata:
@@ -132,7 +154,7 @@ def startTableAnalysis():
     else: # from legacy excel   
         try:
             print(f"{dbdata['NUP']} Not using database json! Loading from legacy excel table.", file=sys.stderr)
-            estudo = Interferencia.from_excel(ProcessPathStorage[name])        
+            estudo = Interferencia.from_excel(ProcessPathStorage[process])        
             table_pd = prettyTableStr(estudo.tabela_interf_master, view=False)
         except RuntimeError:
             table_pd = None    
@@ -159,11 +181,11 @@ def startTableAnalysis():
         dbdata['estudo']['table'] = table_pd.to_dict()            
     # react receives main table data as `dataframe.values.tolist()`
     # but database data is 'dict' not 'list' so must be converted    
-    ProcessManager[name].update({'estudo' : dbdata['estudo']})      
+    ProcessManager[process].update({'estudo' : dbdata['estudo']})      
     return jsdata 
 
 
-@app.route('/flask/list', methods=['POST'])
+@app.route('/flask/work/list', methods=['POST'])
 def getProcessos():           
     """get list of processos from database"""
     sort = request.json.get('sorted')    
@@ -216,7 +238,6 @@ def updatedb(name, data, what='eventview', save=False):
 @app.route('/flask/update_checkbox', methods=['POST'])
 def update_checkbox():
     payload = request.get_json() 
-    # print('pkg checkboxes', payload['name'], payload['data'], file=sys.stderr);
     updatedb(payload['name'], payload['data'], 'checkboxes')    
     return Response(status=204)     
 
@@ -224,45 +245,31 @@ def update_checkbox():
 @app.route('/flask/update_eventview', methods=['POST'])
 def update_collapse():
     payload = request.get_json()  
-    # print('pkg eventview', payload['name'], payload['data'], file=sys.stderr);  
     updatedb(payload['name'], payload['data'], 'eventview')     
     return Response(status=204)
 
 
 #like /flask/redo?process=830.691/2023
-@app.route('/flask/redo', methods=['POST'])
-def redo():
+@app.route('/flask/process/<process>/redo', methods=['GET'])
+def redo(process):
     """redo interferência"""
-    name = request.json.get('process')    
-    process = ProcessManager[name]    
+    process = ProcessManager[process]    
     if process is not None:
         dados = process.dados
         # if 'estudo' in dados:
         #     estudo = dados['estudo']          
         #     # if estudo['type'] == 'interferencia':
-    print(f'remaking process {name}', file=sys.stderr)          
-    estudos.Interferencia.make(name, overwrite=True)
+    print(f'remaking process {process}', file=sys.stderr)          
+    estudos.Interferencia.make(process, overwrite=True)
     return process.dados
 
 
-#like /flask/download?process=830.691/2023
-@app.route('/flask/download', methods=['GET'])
-def download():
-    name = request.args.get('process')      
-    process = ProcessManager[name]
-    if process is None: # for safety reasons (never overwrite)
-        print(f'downloading process {name}', file=sys.stderr)      
-        process = ProcessManager.GetorCreate(name)
-    return process.dados
-
-
-# like /scm?process=830.691/2023
-@app.route('/flask/scm', methods=['GET'])
-def scm_page():
+# like /flask/process/830.691-2023/scm
+@app.route('/flask/process/<process>/scm', methods=['GET'])
+def scm_page(process):
     """return scm page stored only the piece with processo information"""
-    name =  request.args.get('process')
-    print(f'process is {name}', file=sys.stderr)
-    process = ProcessManager[name]
+    print(f'process is {process}', file=sys.stderr)
+    process = ProcessManager[process]
     if process is None:
         return Response(status=404)
     html_content = process.basic_html
@@ -270,13 +277,12 @@ def scm_page():
     res = sp.select('body form div table table:nth-child(3)')[0]    
     return str(res)
 
-# like /polygon?process=830.691/2023
-@app.route('/flask/polygon', methods=['GET'])
-def poly_page():
+# like /flask/process/830.691-2023/polygon
+@app.route('/flask/process/<process>/polygon', methods=['GET'])
+def poly_page(process):
     """return scm polyogon page stored only the piece with processo information"""
-    name =  request.args.get('process')
-    print(f'process is {name}', file=sys.stderr)
-    process = ProcessManager[name]
+    print(f'process is {process}', file=sys.stderr)
+    process = ProcessManager[process]
     if process is None:
         return Response(status=404)
     html_content = process.polygon_html
@@ -284,12 +290,11 @@ def poly_page():
     res = sp.select('body form div table table:nth-child(3)')[0]    
     return str(res)
 
-# like /graph?process=830.691/2023
-@app.route('/flask/graph', methods=['GET'])
-def graph():
-    name =  request.args.get('process')
-    print(f'process is {name}', file=sys.stderr)
-    process = ProcessManager[name]    
+# like /flask/process/830.691/2023/graph
+@app.route('/flask/process/<process>/graph', methods=['GET'])
+def graph(process):
+    print(f'process is {process}', file=sys.stderr)
+    process = ProcessManager[process]    
     if process is not None:
         dados = process.dados
         if('associados' in dados and 
@@ -301,6 +306,8 @@ def graph():
             return  Response(buffer.getvalue(), 
                             mimetype='image/png')  # Adjust mimetype as needed
     return Response(status=204)
+
+
 
 
 #

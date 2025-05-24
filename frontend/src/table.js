@@ -5,6 +5,7 @@ import { EstudoStatusButton } from './status';
 import { Link } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 import { Tooltip } from 'react-tooltip'
+import { fmtProcessName } from './utils';
 
 
 function TinyCheckBox({state, onChange}){  
@@ -228,14 +229,8 @@ function TableAnalysis() {
   const { name } = useParams();
   const [ process, setProcess ] = useState(null); 
 
-  const fmtdname = name.replace('-','/');
-
   useEffect(() => {
-    fetch(`/flask/analyze`, { 
-      method: "POST", 
-      headers: {'Content-Type': 'application/json'},     
-      body: JSON.stringify({ 'name' : fmtdname })
-    })
+    fetch(`/flask/process/${fmtProcessName(name)}/analyze`)
     .then(res => res.json()
     .then(data => {            
       setProcess(data);  
@@ -255,7 +250,7 @@ function TableAnalysis() {
 
   let analyze_table = <h3>No table found!</h3>;
   if (process.estudo.hasOwnProperty('table'))
-    analyze_table = <IeTable studyname={fmtdname} estudo={process.estudo}/>
+    analyze_table = <IeTable studyname={fmtProcessName(name)} estudo={process.estudo}/>
 
   const name_ = name.replace('/', '-');
   const last_event = process.eventos?.[1]?.[0]; // description of last event
@@ -281,7 +276,7 @@ function TableAnalysis() {
           </a> 
         </div> 
         <div>
-          <EstudoStatusButton name={fmtdname} dados={process} />
+          <EstudoStatusButton name={fmtProcessName(name)} dados={process} />
         </div>              
       </div>        
       {analyze_table}

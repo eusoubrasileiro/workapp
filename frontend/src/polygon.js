@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { fmtProcessName } from './utils';
 
 function Polygon(){
     const { name } = useParams();
-    const fmtdname = name.replace('-','/');
     const [ page, setPage ] = useState(null); 
   
-    // /flask/scm/process?process=830.691/2023
+    // /flask/process/830.691-2023/polygon
     useEffect(() => {
-      fetch(`/flask/polygon?process=${fmtdname}`) 
+      fetch(`/flask/process/${fmtProcessName(name)}/polygon`) 
       .then(response => response.text())
       .then(data => {
         setPage(data);
