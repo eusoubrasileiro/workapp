@@ -78,12 +78,12 @@ else:
 
 @app.route("/flask/process/<process>/serve/<filename>", methods=['GET'])
 def process_serve_file(process, filename):
-    path = config['processos_path'] / process / filename
+    path = pathlib.Path(config['processos_path']) / process / filename
     return send_from_directory(path)
 
 @app.route("/flask/process/<process>/files", methods=['GET'])
 def process_files(process):
-    folder = config['processos_path'] / process
+    folder = pathlib.Path(config['processos_path']) / process
     results = []
     for path in folder.rglob("*"):               # recursive; use .iterdir() for flat
         rel = path.relative_to(folder).as_posix()
