@@ -152,8 +152,8 @@ function IeTable({studyname, estudo}){
                 tooltip_text = "<bold>Multiplas Poligonais e Exigência.<br>Faça esta Opção Primeiro!</bold>";
               rcells[i][j] = <Cell key_={td_key}  tooltip={tooltip_text?true:false}  tooltip_text={tooltip_text}
                 value={<> 
-                  <Link className="SCM_link" to={`/scm_page/${ name.replace('/', '-') }`} > {name} </Link> 
-                  <Link className="Poligonal" to={`/polygon_page/${ name.replace('/', '-') }`} > ▱ </Link> </> 
+                  <Link className="SCM_link" to={`/scm_page/${ fmtProcessName(name) }`} > {name} </Link> 
+                  <Link className="Poligonal" to={`/polygon_page/${ fmtProcessName(name) }`} > ▱ </Link> </> 
                 }/>; 
             }
             else
@@ -252,7 +252,7 @@ function TableAnalysis() {
   if (process.estudo.hasOwnProperty('table'))
     analyze_table = <IeTable studyname={fmtProcessName(name)} estudo={process.estudo}/>
 
-  const name_ = name.replace('/', '-');
+  const name_ = fmtProcessName(name);
   const last_event = process.eventos?.[1]?.[0]; // description of last event
   const event_count = process.eventos.length-1; // count of last event -1 header
 

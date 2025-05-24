@@ -24,7 +24,8 @@ from aidbag.anm.careas import estudos
 from aidbag.anm.careas.workflows import (
     work,
     ProcessPathStorage,
-    currentProcessGet
+    currentProcessGet,
+    processPath
 )
 from aidbag.anm.uid import Pud
 from aidbag.anm.careas.scm import (
@@ -75,28 +76,6 @@ else:
     def index():
         return "In development mode!<br> RUN `npm start` from workapp project folder"
 
-
-@app.route("/flask/process/<process>/serve/<filename>", methods=['GET'])
-def process_serve_file(process, filename):
-    path = pathlib.Path(config['processos_path']) / process / filename
-    return send_from_directory(path)
-
-@app.route("/flask/process/<process>/files", methods=['GET'])
-def process_files(process):
-    folder = pathlib.Path(config['processos_path']) / process
-    results = []
-    for path in folder.rglob("*"):               # recursive; use .iterdir() for flat
-        rel = path.relative_to(folder).as_posix()
-        stat = path.stat()
-        results.append({
-            "path": rel,
-            "is_dir": path.is_dir(),
-            "size": stat.st_size,
-            "mtime": int(stat.st_mtime),
-            "mime": mimetypes.guess_type(path.name)[0] if path.is_file() else None,
-        })
-    return results
-    
 
 def uiTableData(table: pd.DataFrame) -> dict: 
     """
@@ -307,7 +286,26 @@ def graph(process):
                             mimetype='image/png')  # Adjust mimetype as needed
     return Response(status=204)
 
+@app.route("/flask/process/<process>/files/<filename>", methods=['GET'])
+def process_serve_file(process, filename):
+    path = processPath(Pud.parse(process)) / filename
+    return send_from_directory(path)
 
+@app.route("/flask/process/<process>/files", methods=['GET'])
+def process_files(process):
+    folder = processPath(Pud.parse(process))
+    results = []
+    for path in folder.rglob("*"):               # recursive; use .iterdir() for flat
+        rel = path.relative_to(folder).as_posix()
+        stat = path.stat()
+        results.append({
+            "path": rel,
+            "is_dir": path.is_dir(),
+            "size": stat.st_size,
+            "mtime": int(stat.st_mtime),
+            "mime": mimetypes.guess_type(path.name)[0] if path.is_file() else None,
+        })
+    return results
 
 
 #

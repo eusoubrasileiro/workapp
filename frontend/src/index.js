@@ -5,7 +5,7 @@ import TableAnalysis from "./table.js";
 import Scm from "./scm.js";
 import Polygon from "./polygon.js";
 import Graph from "./graph.js";
-
+import FilesViewer from "./filesviewer.js";
 
 export default function App() {
 
@@ -17,6 +17,7 @@ export default function App() {
           <Route path="/scm_page/:name" element={ <Scm/> } />  
           <Route path="/polygon_page/:name" element={ <Polygon/> } />
           <Route path="/graph/:name" element={ <Graph/>} />
+          <Route path="/files/:name" element={ <FilesViewer/>} />
        </Routes>       
     </BrowserRouter>
   );

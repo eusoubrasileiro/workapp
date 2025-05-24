@@ -56,8 +56,14 @@ function ProcessRow({index, name, dados, setLoading}) {
       </td>
       <td><EstudoStatusButton name={name} dados={dados} /></td>   
       <td>
+        { hasDados
+          ? <Link to={`/files/${ fmtProcessName(name) }`} > 📁 </Link>
+          : <a> 📁 </a>
+        }
+      </td>
+      <td>
         { hasEstudo
-        ? <Link to={`/table/${ name.replace('/', '-') }`} > {name} </Link>
+        ? <Link to={`/table/${ fmtProcessName(name) }`} > {name} </Link>
         : <a>{name}</a>
         }
       </td>
@@ -66,20 +72,20 @@ function ProcessRow({index, name, dados, setLoading}) {
       </td>      
       <td>
         { hasDados 
-          ? <Link className="SCM" to={`/scm_page/${ name.replace('/', '-') }`} > 📁 </Link> 
-          : <a className="SCM" > 📁 </a> 
+          ? <Link className="SCM" to={`/scm_page/${ fmtProcessName(name) }`} > SCM </Link> 
+          : <a className="SCM" > SCM </a> 
         }   
       </td>   
       <td>
         { hasDados
-          ? <Link className="Poligonal" to={`/polygon_page/${ name.replace('/', '-') }`} > ▱ </Link>           
+          ? <Link className="Poligonal" to={`/polygon_page/${ fmtProcessName(name) }`} > ▱ </Link>           
           : <a className="Poligonal" > ▱ </a>    
         }
       </td>
       <td>
         {
          hasGraph 
-         ? <Link className="Graph" to={`/graph/${ name.replace('/', '-') }`} > ☍ </Link>
+         ? <Link className="Graph" to={`/graph/${ fmtProcessName(name) }`} > ☍ </Link>
          :  <a className="Graph" > ☍ </a> 
         }
       </td>
