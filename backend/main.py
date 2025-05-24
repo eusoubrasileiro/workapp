@@ -288,8 +288,8 @@ def graph(process):
 
 @app.route("/flask/process/<process>/files/<filename>", methods=['GET'])
 def process_serve_file(process, filename):
-    path = processPath(Pud.parse(process)) / filename
-    return send_from_directory(path)
+    path = processPath(Pud.parse(process)) 
+    return send_from_directory(path, filename)
 
 @app.route("/flask/process/<process>/files", methods=['GET'])
 def process_files(process):
