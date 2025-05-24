@@ -227,12 +227,14 @@ function Prioridade(process){  // show prioridade / prioridadec side-by-side
 function TableAnalysis() {
   const { name } = useParams();
   const [ process, setProcess ] = useState(null); 
+  const [ viewfiles, setViewfiles ] = useState(false);
 
   useEffect(() => {
     fetch(`/flask/process/${fmtProcessName(name)}/analyze`)
     .then(res => res.json()
     .then(data => {            
       setProcess(data);  
+      setViewfiles(data?.work?.published);
     }))
     .catch((error) => {      
       console.info(`Error on Table request ${error}`);
@@ -280,9 +282,9 @@ function TableAnalysis() {
       </div>        
       {analyze_table}
     </div>
-    <div>
-      {process?.work?.published ? <FilesViewer name={name} />
-       : ''}
+    <div id='filesviewer'>
+      {viewfiles ? <FilesViewer name={name} />
+       : <button onClick={() => setViewfiles(true)}>View Files</button>}
     </div>
     </>
   );

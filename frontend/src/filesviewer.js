@@ -42,7 +42,8 @@ function FilesViewer() {
         .then((json) => {
           if (!cancel) {
             setFiles(json.filter(f => f.path.endsWith(".png") || f.path.endsWith(".pdf")));
-            setSelected(undefined);
+            const selected = json.filter(f => f.path.includes("backend_png"));            
+            setSelected(selected ? selected[0] : undefined);
           }
         })
         .catch((err) => !cancel && setError(err))
@@ -88,7 +89,7 @@ function FilesViewer() {
     // ─────────────────────────────────────────────────────────────────────
     if (loading) return <p style={{ padding: "1rem" }}>Loading …</p>;
     if (error)   return <p style={{ padding: "1rem", color: "red" }}>Error: {error.message}</p>;
-    if (!files.length) return <p style={{ padding: "1rem" }}>No files for this process.</p>;
+    if (!files.length) return <p style={{ padding: "1rem" }}>No .png or .pdf files for this process.</p>;
   
     const fileEntries = files.filter((f) => !f.is_dir).sort((a, b) => a.path.localeCompare(b.path));
   
