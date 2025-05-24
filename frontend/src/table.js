@@ -3,10 +3,9 @@ import { useParams } from 'react-router-dom';
 import { clipboardCopy } from './utils';
 import { EstudoStatusButton } from './status';
 import { Link } from 'react-router-dom';
-import { v4 as uuidv4 } from 'uuid';
 import { Tooltip } from 'react-tooltip'
 import { fmtProcessName } from './utils';
-
+import FilesViewer from './filesviewer';
 
 function TinyCheckBox({state, onChange}){  
   return (
@@ -280,6 +279,10 @@ function TableAnalysis() {
         </div>              
       </div>        
       {analyze_table}
+    </div>
+    <div>
+      {process?.work?.published ? <FilesViewer name={name} />
+       : ''}
     </div>
     </>
   );
