@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { fmtProcessName } from './utils';
+
 /**
  * <FilesViewer />
  * Shows the list of files that belong to a single process (folder)
@@ -12,116 +13,118 @@ import { fmtProcessName } from './utils';
  */
 
 function FilesViewer() {
-  const { name: procId } = useParams();                  // process identifier
-  const [files, setFiles] = useState([]);                // JSON list from server
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+    const { name: procId } = useParams();
+  
+    const [files, setFiles] = useState([]);      // directory listing
+    const [selected, setSelected] = useState();   // currently previewed file (object from list)
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+  
+    const apiBase = `/flask/process/${fmtProcessName(procId)}/files`;
+  
+    // Build raw‑file URL while keeping nested paths intact
+    const urlFor = useCallback(
+      (rel) => `${apiBase}/${rel.split("/").map(encodeURIComponent).join("/")}`,
+      [apiBase]
+    );
+  
+    // Fetch listing on mount / procId change
+    useEffect(() => {
+      let cancel = false;
+      setLoading(true);
+      setError(null);
+  
+      fetch(apiBase)
+        .then((r) => {
+          if (!r.ok) throw new Error(`HTTP ${r.status}`);
+          return r.json();
+        })
+        .then((json) => {
+          if (!cancel) {
+            setFiles(json.filter(f => f.path.endsWith(".png") || f.path.endsWith(".pdf")));
+            setSelected(undefined);
+          }
+        })
+        .catch((err) => !cancel && setError(err))
+        .finally(() => !cancel && setLoading(false));
+  
+      return () => {
+        cancel = true;
+      };
+    }, [apiBase]);
 
-  // Base part of every API call for this process
-  const apiBase = `/flask/process/${fmtProcessName(procId)}/files`;
-
-  /**
-   * Utility – encode each path segment so "/" keeps its meaning
-   *   "sub/dir/foo.pdf" → "sub/dir/foo.pdf" (segments encoded individually)
-   */
-  const urlFor = useCallback(
-    (relPath) =>
-      `${apiBase}/${relPath
-        .split("/")
-        .map(encodeURIComponent)
-        .join("/")}`,
-    [apiBase]
-  );
-
-  // ───────────────────────────────────────────────────────────────
-  // Fetch the directory listing whenever procId changes
-  // ───────────────────────────────────────────────────────────────
-  useEffect(() => {
-    let cancel = false;
-    setLoading(true);
-    fetch(apiBase)
-      .then((res) => {
-        if (!res.ok) throw new Error(`server responded ${res.status}`);
-        return res.json();
-      })
-      .then((json) => {
-        if (!cancel) setFiles(json);
-      })
-      .catch((err) => {
-        if (!cancel) setError(err);
-      })
-      .finally(() => {
-        if (!cancel) setLoading(false);
-      });
-    return () => {
-      cancel = true;
+    // Decide how to preview based on file extension
+    const Preview = () => {
+      if (!selected) return <p>Select a file to preview.</p>;  
+      const path = selected.path;
+  
+      if (path.endsWith(".png")) {
+        return (
+          <img
+            src={`data:image/png;base64,${selected.content}`}
+            alt={selected.path}
+            style={{ maxWidth: "100%", maxHeight: "80vh", objectFit: "contain" }}
+          />
+        );
+      }
+  
+      if (path.endsWith(".pdf")) {
+        return (
+            <iframe
+            src={`data:application/pdf;base64,${selected.content}`}
+            title={selected.path}
+            style={{ width: "100%", height: "100%", border: "none" }}
+          />
+          );
+      }
+  
+      return (
+        <p>
+          Preview not supported. <a href={urlFor(selected.path)} target="_blank" rel="noopener noreferrer">Download</a>
+        </p>
+      );
     };
-  }, [apiBase]);
-
-  // ───────────────────────────────────────────────────────────────
-  // Open a file in a new tab (or use a modal / viewer later)
-  // ───────────────────────────────────────────────────────────────
-  const openFile = useCallback(
-    (relPath) => {
-      window.location.href = urlFor(relPath);
-    },
-    [urlFor]
-  );
-
-  // ───────────────────────────────────────────────────────────────
-  // Render logic
-  // ───────────────────────────────────────────────────────────────
-  if (loading) return <p style={{ padding: "1rem" }}>Loading …</p>;
-  if (error)   return <p style={{ padding: "1rem", color: "red" }}>Error: {error.message}</p>;
-  if (!files.length) return <p style={{ padding: "1rem" }}>No files for this process.</p>;
-
-  // separate files and directories; show files first by default
-  const filesOnly = files.filter((f) => !f.is_dir).sort((a, b) => a.path.localeCompare(b.path));
-  const dirsOnly  = files.filter((f) =>  f.is_dir).sort((a, b) => a.path.localeCompare(b.path));
-
-  return (
-    <div style={{ padding: "1.5rem" }}>
-      <h2 style={{ marginBottom: "1rem" }}>Files for process {procId}</h2>
-
-      {dirsOnly.length > 0 && (
-        <section style={{ marginBottom: "1.5rem" }}>
-          <h3 style={{ fontSize: "1rem", marginBottom: ".5rem" }}>Folders</h3>
-          <ul style={{ listStyle: "none", padding: 0 }}>
-            {dirsOnly.map((dir) => (
-              <li key={dir.path}>{dir.path}</li>
+  
+    // ─────────────────────────────────────────────────────────────────────
+    if (loading) return <p style={{ padding: "1rem" }}>Loading …</p>;
+    if (error)   return <p style={{ padding: "1rem", color: "red" }}>Error: {error.message}</p>;
+    if (!files.length) return <p style={{ padding: "1rem" }}>No files for this process.</p>;
+  
+    const fileEntries = files.filter((f) => !f.is_dir).sort((a, b) => a.path.localeCompare(b.path));
+  
+    return (
+      <div style={{ display: "grid", gridTemplateColumns: "300px 1fr", gap: "1rem", padding: "1rem" }}>
+        {/* left – file list */}
+        <div>
+          <h3 style={{ marginBottom: ".5rem" }}>Files of {procId}</h3>
+          <ul style={{ listStyle: "none", padding: 0, maxHeight: "80vh", overflowY: "auto" }}>
+            {fileEntries.map((file) => (
+              <li key={file.path} style={{ margin: "0.25rem 0" }}>
+                <button
+                  onClick={() => setSelected(file)}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    padding: 0,
+                    cursor: "pointer",
+                    color: selected?.path === file.path ? "#d33" : "#06c",
+                    textDecoration: "underline",
+                    font: "inherit",
+                  }}
+                >
+                  {file.path}
+                </button>
+              </li>
             ))}
           </ul>
-        </section>
-      )}
-
-      <section>
-        <h3 style={{ fontSize: "1rem", marginBottom: ".5rem" }}>Files</h3>
-        <ul style={{ listStyle: "none", padding: 0 }}>
-          {filesOnly.map((file) => (
-            <li key={file.path} style={{ margin: "0.25rem 0" }}>
-              <button
-                onClick={() => openFile(file.path)}
-                style={{
-                  background: "none",
-                  border: "none",
-                  color: "#0066cc",
-                  textDecoration: "underline",
-                  cursor: "pointer",
-                  padding: 0,
-                  font: "inherit",
-                }}
-              >
-                {file.path}
-              </button>
-              <span style={{ marginLeft: "0.5rem", fontSize: "0.8em", color: "#666" }}>
-                {Math.round(file.size / 1024)} kB
-              </span>
-            </li>
-          ))}
-        </ul>
-      </section>
-    </div>
-  );
-}
+        </div>
+  
+        {/* right – preview pane */}
+        <div style={{ borderLeft: "1px solid #ccc", paddingLeft: "1rem", height: "100vh", overflow: "auto" }}>
+          <Preview />
+        </div>
+      </div>
+    );
+  }
 
 export default FilesViewer;

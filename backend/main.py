@@ -10,6 +10,7 @@ import mimetypes
 import sys, pathlib, os 
 import pandas as pd 
 import copy
+import base64
 from bs4 import BeautifulSoup as soup 
 from flask_session import Session
 from flask_cors import CORS
@@ -17,7 +18,6 @@ from flask import (
         Flask, 
         request, 
         Response,
-        send_from_directory
     )
 from aidbag.anm.config import config
 from aidbag.anm.careas import estudos
@@ -286,11 +286,6 @@ def graph(process):
                             mimetype='image/png')  # Adjust mimetype as needed
     return Response(status=204)
 
-@app.route("/flask/process/<process>/files/<filename>", methods=['GET'])
-def process_serve_file(process, filename):
-    path = processPath(Pud.parse(process)) 
-    return send_from_directory(path, filename)
-
 @app.route("/flask/process/<process>/files", methods=['GET'])
 def process_files(process):
     folder = processPath(Pud.parse(process))
@@ -304,6 +299,7 @@ def process_files(process):
             "size": stat.st_size,
             "mtime": int(stat.st_mtime),
             "mime": mimetypes.guess_type(path.name)[0] if path.is_file() else None,
+            "content": base64.b64encode(path.read_bytes()).decode('utf-8') if path.is_file() else None
         })
     return results
 
