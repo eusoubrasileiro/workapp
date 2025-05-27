@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { fmtProcessName } from './utils';
+import { useNavigation } from './navigation.js';
 
 /**
  * <FilesViewer />
@@ -14,13 +15,15 @@ import { fmtProcessName } from './utils';
 
 function FilesViewer() {
     const { name: procId } = useParams();
+    const { getCurrentProcessInfo } = useNavigation();
   
     const [files, setFiles] = useState([]);      // directory listing
     const [selected, setSelected] = useState();   // currently previewed file (object from list)
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
   
-    const apiBase = `/flask/process/${fmtProcessName(procId)}/files`;
+    const apiBase = `/flask/process/${fmtProcessName(procId)}/files`;  
+    
   
     // Build raw‑file URL while keeping nested paths intact
     const urlFor = useCallback(
@@ -94,37 +97,40 @@ function FilesViewer() {
     const fileEntries = files.filter((f) => !f.is_dir).sort((a, b) => a.path.localeCompare(b.path));
   
     return (
-      <div style={{ display: "grid", gridTemplateColumns: "300px 1fr", gap: "1rem", padding: "1rem" }}>
-        {/* left – file list */}
-        <div>
-          <h3 style={{ marginBottom: ".5rem" }}>Files of {procId}</h3>
-          <ul style={{ listStyle: "none", padding: 0, maxHeight: "80vh", overflowY: "auto" }}>
-            {fileEntries.map((file) => (
-              <li key={file.path} style={{ margin: "0.25rem 0" }}>
-                <button
-                  onClick={() => setSelected(file)}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    padding: 0,
-                    cursor: "pointer",
-                    color: selected?.path === file.path ? "#d33" : "#06c",
-                    textDecoration: "underline",
-                    font: "inherit",
-                  }}
-                >
-                  {file.path}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
+      <>
+        <NavigationIndicator processInfo={getCurrentProcessInfo(procId)} />
+        <div style={{ display: "grid", gridTemplateColumns: "300px 1fr", gap: "1rem", padding: "1rem" }}>
+          {/* left – file list */}
+          <div>
+            <h3 style={{ marginBottom: ".5rem" }}>Files of {procId}</h3>
+            <ul style={{ listStyle: "none", padding: 0, maxHeight: "80vh", overflowY: "auto" }}>
+              {fileEntries.map((file) => (
+                <li key={file.path} style={{ margin: "0.25rem 0" }}>
+                  <button
+                    onClick={() => setSelected(file)}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      padding: 0,
+                      cursor: "pointer",
+                      color: selected?.path === file.path ? "#d33" : "#06c",
+                      textDecoration: "underline",
+                      font: "inherit",
+                    }}
+                  >
+                    {file.path}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
   
-        {/* right – preview pane */}
-        <div style={{ borderLeft: "1px solid #ccc", paddingLeft: "1rem", height: "100vh", overflow: "auto" }}>
-          <Preview />
+          {/* right – preview pane */}
+          <div style={{ borderLeft: "1px solid #ccc", paddingLeft: "1rem", height: "100vh", overflow: "auto" }}>
+            <Preview />
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 

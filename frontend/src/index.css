@@ -78,10 +78,12 @@ div.flexcontainer
 {
   font-weight: bold;
   font-size: 15px;
-  color: #0b2adc;
+  color: #000000;
   font-family: Tahoma;
   padding: 4px;
   text-decoration: none;
+  border-radius: 10px;
+  background-color: #c2caf3;
 }
 
 .Graph {

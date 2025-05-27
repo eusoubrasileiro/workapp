@@ -5,6 +5,7 @@ import { EstudoStatusButton } from './status';
 import { Link } from 'react-router-dom';
 import { Tooltip } from 'react-tooltip'
 import { fmtProcessName } from './utils';
+import { useNavigation, NavigationIndicator } from './navigation.js';
 import FilesViewer from './filesviewer';
 
 function TinyCheckBox({state, onChange}){  
@@ -228,18 +229,21 @@ function TableAnalysis() {
   const { name } = useParams();
   const [ process, setProcess ] = useState(null); 
   const [ viewfiles, setViewfiles ] = useState(false);
+  const { getCurrentProcessInfo } = useNavigation();
 
   useEffect(() => {
+    console.log('TableAnalysis: Fetching data for process:', name);
     fetch(`/flask/process/${fmtProcessName(name)}/analyze`)
     .then(res => res.json()
     .then(data => {            
+      console.log('TableAnalysis: Data received for process:', name);
       setProcess(data);  
       setViewfiles(data?.work?.published);
     }))
     .catch((error) => {      
       console.info(`Error on Table request ${error}`);
     });       
-  }, []); // will run only once
+  }, [name]); // Add name to dependency array
 
   // Must always use conditional rendering to wait for variables loading
   // and definition otherwise Error: `process.prioridade` undefined 
@@ -261,6 +265,7 @@ function TableAnalysis() {
     <>
     <div className="tablecontainer">
       <div className="navbarcontainer">
+        <NavigationIndicator processInfo={getCurrentProcessInfo(name)} />
         <div className="event_type">
           <a id='tipo'> { process.tipo }</a>          
           <a id='event_count'> Total: { event_count }</a> 

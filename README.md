@@ -12,6 +12,17 @@ The application offers two main interfaces:
 
 ![Process Selection and Status Overview](https://github.com/user-attachments/assets/2d0fcf55-1e1c-4cc1-bf8e-e6ef30cc6dae)
 
+##### Global Shortcuts
+- **Left Arrow (←)**: Navigate to the previous process in the list
+- **Right Arrow (→)**: Navigate to the next process in the list
+
+- Navigation works across all process-related pages:
+  - Table Analysis (`/table/:name`)
+  - SCM Page (`/scm_page/:name`)
+  - Polygon Page (`/polygon_page/:name`)
+  - Graph Page (`/graph/:name`)
+  - Files Viewer (`/files/:name`)
+
 #### Interferência Table Analysis
 
 ![Interferência Table Analysis](https://github.com/user-attachments/assets/69059cb5-0026-41cc-8b13-82e93d915e2b)

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useState, useEffect} from 'react';
 import { clipboardCopy, Button } from './utils';
 import { EstudoStatusButton } from './status';
+import { useNavigation } from './navigation.js';
 import './index.css';
 import './loader.css';
 import { fmtProcessName } from './utils';
@@ -107,6 +108,7 @@ function PickProcess(){
   const [loading, setLoading] = useState(true);
   const [sort, setSort] = useState('')
   const [month, setMonth] = useState(new Date().toLocaleString('pt-BR', { month: 'long' }).replace(/^\w/, c => c.toUpperCase())); 
+  const { setProcessList } = useNavigation();
 
   function fetchData(sorted=''){    
     sorted = (sort!=sorted)? sorted: '';    
@@ -118,22 +120,15 @@ function PickProcess(){
     .then(res => res.json()
     .then(data => {
       setInfo(data.status);
-      setProcessos(data.processos);          
+      setProcessos(data.processos);
+      // Update the global process list for navigation
+      setProcessList(data.processos);          
     }))
     .catch((error) => {      
       console.info(`Error on fetchData ${error}`);
     });      
     setSort(sorted);
   }
-
-  // function setLoading(value){
-  //   if (value) {
-  //     document.body.classList.add('wait-cursor');
-  //   } else {
-  //     document.body.classList.remove('wait-cursor');
-  //   }
-  //   setLoading(value);
-  // }
 
 
   useEffect(() => {
@@ -146,9 +141,6 @@ function PickProcess(){
   useEffect(() => {
   }, [sort])
 
-  // if (processos.length == 0) { // conditional rendering otherwise `processos` undefined
-  //   return <div>Loading...</div>;
-  // } 
 
   let hasDados = (processos)? true: false;
 
