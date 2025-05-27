@@ -272,7 +272,7 @@ function TableAnalysis() {
           <a id='evento'> Last: { last_event }</a>          
         </div>
         { Prioridade(process) }        
-        <Link className="SCM" to={`/scm_page/${ name_ }`} > 📁 </Link>  
+        <Link className="SCM" to={`/scm_page/${ name_ }`} > SCM </Link>  
         <Link className="Poligonal" to={`/polygon_page/${ name_ }`} > ▱ </Link>
         <Link className="Graph" to={`/graph/${ name_ }`} > ☍ </Link>
         <button className="copyprocess" onClick={() => clipboardCopy(process.NUP)} > { process.NUP }</button>

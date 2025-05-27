@@ -58,8 +58,8 @@ function ProcessRow({index, name, dados, setLoading}) {
       <td><EstudoStatusButton name={name} dados={dados} /></td>   
       <td>
         { hasDados
-          ? <Link to={`/files/${ fmtProcessName(name) }`} > 📁 </Link>
-          : <a> 📁 </a>
+          ? <Link to={`/files/${ fmtProcessName(name) }`} > Files </Link>
+          : <div> Files </div>
         }
       </td>
       <td>
@@ -152,7 +152,8 @@ function PickProcess(){
           <tr>
             <th>  </th>
             <th><img src="https://sei.anm.gov.br/imagens/sei_logo_azul_celeste.jpg" width="25"></img></th>
-            <th>  </th>
+            <th>STATUS</th>
+            <th>FILES</th>
             <th><Button onClick={() => fetchData('name')}>Name</Button></th>
             <th><img src="https://sei.anm.gov.br/imagens/sei_logo_azul_celeste.jpg" width="25"></img></th>
             <th>SCM</th>
