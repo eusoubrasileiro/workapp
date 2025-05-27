@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { fmtProcessName } from './utils';
-import { useNavigation } from './navigation.js';
 
 /**
  * <FilesViewer />
@@ -14,16 +13,13 @@ import { useNavigation } from './navigation.js';
  */
 
 function FilesViewer() {
-    const { name: procId } = useParams();
-    const { getCurrentProcessInfo } = useNavigation();
-  
+    const { name: procId } = useParams();          
     const [files, setFiles] = useState([]);      // directory listing
     const [selected, setSelected] = useState();   // currently previewed file (object from list)
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
   
-    const apiBase = `/flask/process/${fmtProcessName(procId)}/files`;  
-    
+    const apiBase = `/flask/process/${fmtProcessName(procId)}/files`;
   
     // Build raw‑file URL while keeping nested paths intact
     const urlFor = useCallback(
@@ -97,8 +93,7 @@ function FilesViewer() {
     const fileEntries = files.filter((f) => !f.is_dir).sort((a, b) => a.path.localeCompare(b.path));
   
     return (
-      <>
-        <NavigationIndicator processInfo={getCurrentProcessInfo(procId)} />
+      <>        
         <div style={{ display: "grid", gridTemplateColumns: "300px 1fr", gap: "1rem", padding: "1rem" }}>
           {/* left – file list */}
           <div>
