@@ -139,6 +139,21 @@ function NavigationProvider({ children }) {
           event.preventDefault();
           navigateToProcess('next');
           break;
+        case 'ArrowUp':
+          console.log('Up arrow pressed');
+          event.preventDefault();
+          navigateToProcess('next');
+          break;
+        case 'ArrowDown':
+          console.log('Down arrow pressed');
+          event.preventDefault();
+          navigateToProcess('prev');
+          break;
+        case 'h':
+          console.log('Home pressed');
+          event.preventDefault();
+          navigate('/');
+          break;
       }
     };
     document.addEventListener('keydown', handleKeyDown);
