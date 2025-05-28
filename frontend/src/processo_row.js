@@ -69,6 +69,7 @@ function ProcessRow({name, process, processInfo=null}) {
             <div className='errorStatus'>
                 {prework_error}                
             </div>            
+            <Link className="home" to={`/`} > &#127968; </Link>
             {processInfo ? <NavigationIndicator processInfo={processInfo} /> : ''} 
         </div>
         </>
